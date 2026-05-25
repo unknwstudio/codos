@@ -13,7 +13,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.38.0",
     "@supabase/supabase-js": "^2.91.0",
     "lucide-react": "^0.562.0",
     "node-telegram-bot-api": "^0.67.0",
