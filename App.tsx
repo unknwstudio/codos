@@ -4,6 +4,7 @@ import DownloadPage from './components/DownloadPage';
 import QuizPage from './components/QuizPage';
 import EngQuizPage from './components/EngQuizPage';
 import ReportPage from './components/ReportPage';
+import DSPage from './components/DSPage';
 import CTAFormModal from './components/CTAFormModal';
 
 const App: React.FC = () => {
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   const isQuizPage = /^\/quiz\/?$/.test(window.location.pathname);
   const isEngQuizPage = /^\/eng-quiz\/?$/.test(window.location.pathname);
   const isReportPage = /^\/report\/.+/.test(window.location.pathname);
+  const isDsPage = /^\/ds\/?$/.test(window.location.pathname);
 
   useEffect(() => {
     const checkUrlState = () => {
@@ -52,6 +54,7 @@ const App: React.FC = () => {
   if (isQuizPage) return <QuizPage />;
   if (isEngQuizPage) return <EngQuizPage />;
   if (isReportPage) return <ReportPage />;
+  if (isDsPage) return <DSPage />;
 
   return (
     <>
