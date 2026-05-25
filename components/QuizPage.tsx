@@ -36,7 +36,7 @@ const QUADRANT_MAP: {key:string; label:string; icon:string; qIds:string[]}[] = [
 ];
 
 /* Question icons */
-const Q_ICONS: Record<string, React.FC<{className?:string}>> = {
+const Q_ICONS: Record<string, React.FC<{className?: string; style?: React.CSSProperties}>> = {
   org_1:Users, org_2:DollarSign, org_3:Zap, org_4:Layers,
   org_5:Target, org_6:Bot, org_7:BookOpen, org_8:Award,
   org_9:Building2, org_10:Settings,

@@ -230,7 +230,7 @@ const BLOCK_COLORS: Record<string, string> = {
    HELPERS
    ═══════════════════════════════════════════ */
 
-const Q_ICONS: Record<string, React.FC<{ className?: string }>> = {
+const Q_ICONS: Record<string, React.FC<{ className?: string; style?: React.CSSProperties }>> = {
   f1: Eye, f2: Shield, f3: GitBranch, f4: Database, f5: Clock, f6: Shield, f7: Clock,
   a1: Terminal, a2: Code, a3: Shield, a4: Bug, a5: Settings,
   a7: Bot, a9: BarChart2,
