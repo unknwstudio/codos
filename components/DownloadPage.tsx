@@ -10,7 +10,7 @@ const DownloadPage: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-accent" />
             Codos OS
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-h1 font-bold tracking-tight mb-6">
             Download Codos OS
           </h1>
           <p className="text-body-lg text-muted max-w-2xl leading-relaxed">

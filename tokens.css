@@ -110,10 +110,23 @@
   /* ---- Radii ---- */
   --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* ---- Border widths ---- */
   --border-thin: 1px;
+
+  /* ---- Responsive layout ----
+     Breakpoints are the single source for layout switches (the JS `useIsMobile`
+     helper mirrors --bp-md). The site is NOT container-locked: content uses a
+     generous fluid max + a viewport-fluid gutter, and section rhythm scales. */
+  --bp-sm: 480px;
+  --bp-md: 760px;
+  --bp-lg: 1080px;
+  --page-max: 90rem;                          /* 1440px — wide cap, not a lock */
+  --page-gutter: clamp(1.25rem, 4vw, 4rem);   /* fluid page side padding */
+  --section-y: clamp(3.5rem, 7vw, 7rem);      /* fluid section vertical rhythm */
 
   /* ============================================================
      COLOR — real product values, pixel-exact to the live pages.

@@ -163,3 +163,50 @@ is byte-identical across all three frames (one shared asset).
   (node-positioned, non-responsive). Replaced with semantic vertical connectors +
   flow order, which preserves the "routed/deduped → record" reading and stays fluid.
 - Verified in isolation at 1440 and 500px (clean match; cards reflow correctly).
+
+---
+
+## Task 5 — full responsive + fluid type clamping
+
+- **Fluid type scale**: already clamp()-based in tokens since Task 0
+  (`--text-display/h1/h2/h3/h4/intro/body-lg/body/body-sm/label`). This task makes
+  it visible + applied. Headline and body sizes scale smoothly with the viewport.
+- **Layout tokens added** (single source for breakpoints + fluid layout):
+  `--bp-sm/md/lg`, `--page-max` (90rem — a generous cap, **not** a lock),
+  `--page-gutter` (`clamp(1.25rem,4vw,4rem)`), `--section-y` (`clamp(3.5rem,7vw,7rem)`).
+  Also `--radius-lg/xl`. The JS `useIsMobile(760)` breakpoint mirrors `--bp-md`.
+- **De-containerized EditorialLanding**: the hard `maxWidth:1180` + fixed `0 48px`
+  gutter is gone — `S.inner` now uses `--page-max` + the fluid `--page-gutter`, and
+  the dropped `innerStyle` px-override. All section vertical paddings (the discrete
+  `isMobile ? 56px : 80px` etc.) → the fluid `--section-y`. `S.wrap`/`S.body` colors
+  tokenized; `S.body` size → fluid `--text-body`.
+- **DownloadPage**: heading → fluid `text-h1` token (was `text-4xl md:text-6xl`).
+  Container (`max-w-4xl mx-auto`, `px-4 sm:px-6 lg:px-8`) is already fluid/responsive.
+- **/ds updated** to show the responsive/clamped scale: header + type-section notes
+  state the sizes are fluid `clamp()`s (the live computed value updates on resize),
+  plus a new "Responsive layout" section listing `--page-max/--page-gutter/
+  --section-y/--bp-*`.
+- **Audit of all pages** (mobile → wide desktop):
+  - `QuizPage`, `EngQuizPage`, `ReportPage`: already mobile-first Tailwind-responsive
+    (centered `max-w-2xl`/`max-w-md` columns, `flex-col md:flex-row`, `md:` guards).
+    The scary fixed widths are **decorative background glows** (absolute,
+    `pointer-events-none`, clipped by `overflow-hidden`) and breakpoint-guarded
+    `md:w-[340px]` panels (stack on mobile) — no real overflow. Verified the quiz
+    renders clean at 500px. These pages intentionally use a **separate dark "app"
+    type system** (Space Grotesk / Plus Jakarta / JetBrains Mono); migrating them
+    onto the editorial clamp scale would change their look and is out of scope —
+    flagged as a possible future unification.
+  - `CTAFormModal`: already responsive (`width:100%`, `maxWidth:640`, `maxHeight:88vh`,
+    `overflowY:auto`, mobile-aware padding). No change needed.
+  - Legacy EditorialLanding marketing sections (approach/who/build/team/faq) keep
+    their bespoke 2-step `isMobile` heading sizes (already adaptive); the canonical
+    fluid scale governs the redesigned brand surfaces + /ds + DownloadPage. Migrating
+    the legacy headings onto the coarser 3-step token scale would alter their
+    established hierarchy, so left as a deliberate follow-up.
+
+### Headless-screenshot caveat (for morning QA)
+Chrome headless floors the window width at ~500px and intermittently fails to paint
+the 2.6MB particle PNG on cold mid-scroll loads (virtual-time decode race). So a few
+verification screenshots came back blank even though the DOM/rects were correct
+(proven via injected debug readouts). None of this affects real browsers. Worth a
+quick manual pass at a true ~375px width in the morning.

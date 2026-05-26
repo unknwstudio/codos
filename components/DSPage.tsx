@@ -72,6 +72,16 @@ const SPACING = [
   '--space-6', '--space-8', '--space-10', '--space-12',
 ];
 
+// Responsive layout tokens — the single source for breakpoints + fluid layout.
+const LAYOUT = [
+  { token: '--page-max', note: 'max content width' },
+  { token: '--page-gutter', note: 'fluid side padding' },
+  { token: '--section-y', note: 'fluid section rhythm' },
+  { token: '--bp-sm', note: 'small breakpoint' },
+  { token: '--bp-md', note: 'mobile breakpoint (useIsMobile)' },
+  { token: '--bp-lg', note: 'large breakpoint' },
+];
+
 const BUTTON_VARIANTS = [
   { cls: 'ds-btn--primary', label: 'Primary' },
   { cls: 'ds-btn--secondary', label: 'Secondary' },
@@ -142,12 +152,14 @@ const DSPage: React.FC = () => {
             The reference for tokens and primitives. Every value below comes from a token in
             <code className="text-text"> tokens.css</code>. Change a token and this page — and everything that
             consumes it — updates. Headlines use <code className="text-text">GT&nbsp;Alpina&nbsp;Typewriter</code>;
-            body/UI uses <code className="text-text">DM&nbsp;Mono</code>.
+            body/UI uses <code className="text-text">DM&nbsp;Mono</code>. The type scale is{' '}
+            <strong className="text-text">fluid</strong> — each size is a <code className="text-text">clamp()</code>{' '}
+            that scales with the viewport. <em>Resize the window</em> and the computed values below update live.
           </p>
         </header>
 
         {/* Type scale */}
-        <Section title="Type scale — headline" note="Rendered in --font-headline (GT Alpina Typewriter).">
+        <Section title="Type scale — headline" note="Fluid clamp() sizes, rendered in --font-headline (GT Alpina Typewriter). The value shown is the current (clamped) size at this viewport width.">
           <div className="flex flex-col gap-lg">
             {HEADLINE_SCALE.map((t) => (
               <div key={t.token} className="flex flex-col gap-xs">
@@ -158,7 +170,7 @@ const DSPage: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Type scale — body" note="Rendered in --font-body (DM Mono).">
+        <Section title="Type scale — body" note="Fluid clamp() sizes, rendered in --font-body (DM Mono). Resize to watch the values scale.">
           <div className="flex flex-col gap-lg">
             {BODY_SCALE.map((t) => (
               <div key={t.token} className="flex flex-col gap-xs">
@@ -197,6 +209,15 @@ const DSPage: React.FC = () => {
           <div className="flex flex-col gap-md">
             {SPACING.map((s) => (
               <SpacingBar key={s} token={s} />
+            ))}
+          </div>
+        </Section>
+
+        {/* Responsive layout */}
+        <Section title="Responsive layout" note="Breakpoints and fluid layout values live in tokens — the site is not container-locked. --page-gutter / --section-y are clamp()s; resize to watch them scale.">
+          <div className="flex flex-col gap-md">
+            {LAYOUT.map((l) => (
+              <Meta key={l.token} name={l.token} extra={l.note} />
             ))}
           </div>
         </Section>

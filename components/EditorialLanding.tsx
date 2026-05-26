@@ -155,11 +155,13 @@ const COPY = {
 const S = {
   wrap: {
     fontFamily: 'Urbanist, sans-serif',
-    background: '#f5f1ea',
-    color: '#1a1a1a',
+    background: 'var(--color-bg)',
+    color: 'var(--color-text)',
     minHeight: '100vh',
   } as CSSProperties,
-  inner: { maxWidth: 1180, margin: '0 auto', padding: '0 48px' } as CSSProperties,
+  // Fluid container — no longer locked at a fixed px width. Generous max + a
+  // viewport-fluid gutter (both from tokens), so content breathes mobile → wide.
+  inner: { maxWidth: 'var(--page-max)', margin: '0 auto', padding: '0 var(--page-gutter)' } as CSSProperties,
   serif: { fontFamily: '"Fraunces", "Instrument Serif", Georgia, serif' } as CSSProperties,
   kicker: {
     fontFamily: '"Geist Mono", monospace',
@@ -183,7 +185,7 @@ const S = {
     border: '1px solid rgba(0,0,0,0.2)', color: '#1a1a1a',
     fontSize: 14, fontWeight: 500, textDecoration: 'none', background: 'transparent', cursor: 'pointer',
   } as CSSProperties,
-  body: { fontSize: 16, lineHeight: 1.6, color: '#3a3a3a' } as CSSProperties,
+  body: { fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' } as CSSProperties,
 };
 
 // ───────────────── CodosLogo ─────────────────
@@ -298,7 +300,7 @@ function FeelingSection() {
     <section
       ref={ref}
       style={{
-        padding: isMobile ? '64px 0 72px' : '120px 0 140px',
+        padding: 'var(--section-y) 0',
         textAlign: 'center',
         borderTop: '1px solid rgba(0,0,0,0.08)',
         borderBottom: '1px solid rgba(0,0,0,0.08)',
@@ -360,7 +362,7 @@ function HowItWorksSection() {
   }, []);
 
   return (
-    <section id="how" ref={ref} style={{ padding: isMobile ? '56px 0' : '80px 0', overflow: 'hidden' }}>
+    <section id="how" ref={ref} style={{ padding: 'var(--section-y) 0', overflow: 'hidden' }}>
       <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 64 }}>
         <div style={S.kicker}>{COPY.howKicker}</div>
         <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: '0 auto', maxWidth: 720 }}>{COPY.howTitle}</h2>
@@ -806,7 +808,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
     }
   };
 
-  const innerStyle: CSSProperties = { ...S.inner, padding: isMobile ? '0 20px' : '0 48px' };
+  const innerStyle: CSSProperties = S.inner; // fluid gutter handles every width
 
   return (
     <div style={S.wrap}>
@@ -817,7 +819,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         <FeelingSection />
 
         {/* APPROACH */}
-        <section id="solution" style={{ padding: isMobile ? '64px 0' : '100px 0' }}>
+        <section id="solution" style={{ padding: 'var(--section-y) 0' }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1.5fr',
@@ -853,7 +855,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         <ContextGraphSection />
 
         {/* WHO */}
-        <section style={{ padding: isMobile ? '64px 0' : '100px 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+        <section style={{ padding: 'var(--section-y) 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
           <div style={S.kicker}>{COPY.whoKicker}</div>
           <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: isMobile ? '0 0 32px' : '0 0 48px', maxWidth: 820 }}>
             {COPY.whoTitle}
@@ -883,7 +885,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </section>
 
         {/* BUILD VS BUY */}
-        <section style={{ padding: isMobile ? '56px 0' : '80px 0' }}>
+        <section style={{ padding: 'var(--section-y) 0' }}>
           <div style={S.kicker}>Analysis</div>
           <h2 style={{ ...S.serif, fontSize: isMobile ? 30 : 48, lineHeight: 1.1, letterSpacing: isMobile ? -0.6 : -1, fontWeight: 400, margin: '0 0 12px', maxWidth: 720 }}>
             {COPY.buildVsBuyTitle}
@@ -974,7 +976,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         <HowItWorksSection />
 
         {/* TEAM */}
-        <section id="team" style={{ padding: isMobile ? '56px 0' : '80px 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+        <section id="team" style={{ padding: 'var(--section-y) 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
           <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
             <div style={S.kicker}>{COPY.teamKicker}</div>
             <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: '0 auto', maxWidth: 720 }}>
@@ -1001,7 +1003,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </section>
 
         {/* FAQ */}
-        <section id="faq" style={{ padding: isMobile ? '56px 0' : '80px 0' }}>
+        <section id="faq" style={{ padding: 'var(--section-y) 0' }}>
           <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 40 }}>
             <div style={S.kicker}>{COPY.faqKicker}</div>
             <h2 style={{ ...S.serif, fontSize: isMobile ? 28 : 48, lineHeight: 1.1, letterSpacing: isMobile ? -0.6 : -1, fontWeight: 400, margin: 0 }}>{COPY.faqTitle}</h2>
@@ -1020,7 +1022,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </section>
 
         {/* CLOSING */}
-        <section id="demo" style={{ padding: isMobile ? '48px 0 80px' : '80px 0 120px' }}>
+        <section id="demo" style={{ padding: 'var(--section-y) 0' }}>
           <div style={{
             background: '#1a1a1a', color: '#f5f1ea',
             borderRadius: isMobile ? 22 : 32,
