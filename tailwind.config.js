@@ -12,6 +12,8 @@ export default {
         // Design-system fonts, backed by tokens (tokens.css)
         headline: ['var(--font-headline)'],
         body: ['var(--font-body)'],
+        serif: ['var(--font-serif)'],
+        mono: ['var(--font-mono)'],
       },
       // Design-system type scale — role-named keys (no collision with
       // Tailwind's xs/sm/lg/...), each backed by a token + paired line-height.
@@ -61,7 +63,9 @@ export default {
         surface: 'var(--color-surface)',
         text: 'var(--color-text)',
         muted: 'var(--color-muted)',
+        faint: 'var(--color-faint)',
         border: 'var(--color-border)',
+        'border-strong': 'var(--color-border-strong)',
         accent: 'var(--color-accent)',
         'accent-hover': 'var(--color-accent-hover)',
         'accent-contrast': 'var(--color-accent-contrast)',
@@ -69,6 +73,14 @@ export default {
         warning: 'var(--color-warning)',
         danger: 'var(--color-danger)',
         info: 'var(--color-info)',
+        // Editorial primitives (raw values) for utility-based pages.
+        brand: 'var(--color-brand)',
+        cream: 'var(--color-cream)',
+        paper: 'var(--color-paper)',
+        'paper-warm': 'var(--color-paper-warm)',
+        ink: 'var(--color-ink)',
+        'ink-soft': 'var(--color-ink-soft)',
+        white: 'var(--color-white)',
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',

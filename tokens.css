@@ -59,9 +59,13 @@
 }
 
 :root {
-  /* ---- Font families ---- */
-  --font-headline: 'GT Alpina Typewriter', Georgia, 'Times New Roman', serif;
-  --font-body: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* ---- Font families — real product typefaces ---- */
+  --font-sans: 'Urbanist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif: "Fraunces", "Instrument Serif", Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  /* Aliases consumed by /ds + ds.css (now resolve to the real product fonts) */
+  --font-headline: var(--font-serif);
+  --font-body: var(--font-sans);
 
   /* ---- Type scale: size + paired line-height ----
      Headline roles render in --font-headline; body roles in --font-body. */
@@ -102,17 +106,47 @@
   /* ---- Border widths ---- */
   --border-thin: 1px;
 
-  /* ---- Color palette (semantic) ---- */
-  --color-bg: #f4f0e8;
-  --color-surface: #fbf9f4;
-  --color-text: #1a1a1a;
-  --color-muted: #767063;
-  --color-border: #d8d0c0;
-  --color-accent: #ea580c;
-  --color-accent-hover: #c2410c;
-  --color-accent-contrast: #ffffff;
-  --color-success: #2f8a3e;
+  /* ============================================================
+     COLOR — real product values, pixel-exact to the live pages.
+     Primitives hold raw values; semantic tokens alias them.
+     Default theme = editorial / light (the landing brand).
+     The app pages (quiz/report/download) add a dark theme group
+     when they are refactored.
+     ============================================================ */
+
+  /* Primitive neutrals — light / editorial */
+  --color-cream: #f5f1ea;
+  --color-paper: #faf5ec;
+  --color-paper-warm: #f5ede0;
+  --color-white: #ffffff;
+  --color-ink: #1a1a1a;
+  --color-ink-soft: #3a3a3a;
+  --color-ink-55: rgba(26, 26, 26, 0.55);
+  --color-ink-22: rgba(26, 26, 26, 0.22);
+  --color-ink-12: rgba(26, 26, 26, 0.12);
+  --color-ink-06: rgba(26, 26, 26, 0.06);
+
+  /* Primitive brand (editorial orange) */
+  --color-brand: #F26B1F;
+  --color-brand-ring: #F26B1F1f; /* brand @ ~12% alpha (focus ring) */
+
+  /* Editorial state inks */
+  --color-danger-ink: #7a3a1c;
+  --color-success-ink: #2c5a44;
+
+  /* ---- Semantic tokens (editorial / default theme) ---- */
+  --color-bg: var(--color-cream);
+  --color-surface: var(--color-white);
+  --color-text: var(--color-ink);
+  --color-muted: var(--color-ink-soft);
+  --color-faint: var(--color-ink-55);
+  --color-border: var(--color-ink-12);
+  --color-border-strong: var(--color-ink-22);
+  --color-accent: var(--color-brand);
+  --color-accent-hover: #d95f15; /* /ds button hover — design choice, not a live-page value */
+  --color-accent-contrast: var(--color-cream);
+  --color-success: var(--color-success-ink);
   --color-warning: #9a6a00;
-  --color-danger: #c0392b;
+  --color-danger: var(--color-danger-ink);
   --color-info: #1b6ec2;
 }
