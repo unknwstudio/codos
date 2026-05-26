@@ -82,6 +82,15 @@ const LAYOUT = [
   { token: '--bp-lg', note: 'large breakpoint' },
 ];
 
+// Motion tokens — easing + durations for transitions and scroll reveals.
+const MOTION = [
+  { token: '--ease-out', note: 'standard easing' },
+  { token: '--ease-spring', note: 'overshoot easing' },
+  { token: '--duration-fast', note: 'hovers / small state' },
+  { token: '--duration-base', note: 'buttons / cards' },
+  { token: '--duration-slow', note: 'scroll reveals' },
+];
+
 const BUTTON_VARIANTS = [
   { cls: 'ds-btn--primary', label: 'Primary' },
   { cls: 'ds-btn--secondary', label: 'Secondary' },
@@ -124,6 +133,27 @@ const SpacingBar: React.FC<{ token: string }> = ({ token }) => (
     <Meta name={token} />
   </div>
 );
+
+// Live scroll-reveal demo — replays the fade/lift/blur reveal on click.
+const RevealDemo: React.FC = () => {
+  const [shown, setShown] = useState(true);
+  const replay = () => { setShown(false); requestAnimationFrame(() => requestAnimationFrame(() => setShown(true))); };
+  return (
+    <div className="flex flex-col gap-md items-start">
+      <div
+        className="bg-panel rounded-token w-full"
+        style={{
+          height: 'var(--space-12)',
+          opacity: shown ? 1 : 0,
+          transform: shown ? 'none' : 'translateY(26px)',
+          filter: shown ? 'none' : 'blur(5px)',
+          transition: 'opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out), filter var(--duration-slow) var(--ease-out)',
+        }}
+      />
+      <button type="button" className="ds-btn ds-btn--secondary" onClick={replay}>Replay reveal</button>
+    </div>
+  );
+};
 
 const Toggle: React.FC = () => {
   const [on, setOn] = useState(false);
@@ -219,6 +249,26 @@ const DSPage: React.FC = () => {
             {LAYOUT.map((l) => (
               <Meta key={l.token} name={l.token} extra={l.note} />
             ))}
+          </div>
+        </Section>
+
+        {/* Motion */}
+        <Section title="Motion" note="Centralized easing + durations. Buttons/cards transition on hover (--duration-base); sections fade + lift in on scroll (--duration-slow). All honour prefers-reduced-motion.">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl items-start">
+            <div className="flex flex-col gap-md">
+              {MOTION.map((m) => (
+                <Meta key={m.token} name={m.token} extra={m.note} />
+              ))}
+              <div className="flex flex-wrap gap-md mt-sm">
+                <button type="button" className="ds-btn ds-btn--primary">Hover me</button>
+                <button type="button" className="ds-btn ds-btn--secondary">Hover me</button>
+              </div>
+              <StateCaption>Hover transitions use --duration-fast · --ease-out.</StateCaption>
+            </div>
+            <div className="flex flex-col gap-sm">
+              <StateCaption>Scroll reveal</StateCaption>
+              <RevealDemo />
+            </div>
           </div>
         </Section>
 

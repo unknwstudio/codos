@@ -278,3 +278,25 @@ infographic with its connector paths):
 - Dead code left behind (harmless, no `noUnusedLocals`): `CodosLogo`, `LogoPill`,
   the `S` style object's legacy keys, `ACCENT`, and a few now-unused `COPY` fields —
   candidates for a later prune.
+
+---
+
+## Polish round — scroll reveals, button hovers, /ds motion
+
+- **Motion tokens** added to tokens.css (`--ease-out`, `--ease-spring`,
+  `--duration-fast/base/slow`) — the single source for all transition timing.
+- **Scroll reveals**: new `Reveal` component (IntersectionObserver → fade + lift +
+  slight blur, `--duration-slow`/`--ease-out`, staggered via a `delay` prop). Wraps
+  the section headers + cards across diagnostic/graph/Who/Build/Team/FAQ/Closing
+  (HowItWorks kept its existing fly-in). Honours `prefers-reduced-motion` (shows
+  immediately). Verified it settles to the visible state.
+- **Button + affordance hovers**: class hooks in `index.css` (inline styles can't do
+  `:hover`) driven by the motion tokens — `.lp-btn` (lift + shadow; `--filled`,
+  `--outline`, `--accent` variants), `.lp-link` (accent on hover), `.lp-card`
+  (lift + shadow on Who/How/Team panels), `.lp-logo` (opacity), and `.lp-faq`
+  (summary accent + the `+` rotating to `×` on open). All disabled under
+  `prefers-reduced-motion`. Applied to hero/nav/closing buttons, nav+footer links,
+  partner logos, FAQ rows, and the panel cards.
+- **/ds updated**: a new **Motion** section listing the motion tokens with a live
+  hover-button demo + a replayable scroll-reveal demo; ds.css transitions
+  re-pointed at `--duration-fast`/`--ease-out` (no more hardcoded `0.15s ease`).

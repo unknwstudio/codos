@@ -20,8 +20,8 @@
   border-radius: var(--radius-md);
   border: var(--border-thin) solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease,
-    color 0.15s ease, opacity 0.15s ease, transform 0.05s ease;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 .ds-btn:focus-visible,
 .ds-btn.is-focus {
@@ -94,7 +94,7 @@
   border: var(--border-thin) solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
 .ds-field::placeholder {
   color: var(--color-muted);
@@ -153,7 +153,7 @@
   background: var(--color-border);
   border: var(--border-thin) solid var(--color-border);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-fast) var(--ease-out);
   padding: 0;
 }
 .ds-toggle__knob {
@@ -165,7 +165,7 @@
   transform: translateY(-50%);
   border-radius: var(--radius-full);
   background: var(--color-surface);
-  transition: left 0.15s ease;
+  transition: left var(--duration-fast) var(--ease-out);
 }
 .ds-toggle[aria-checked='true'],
 .ds-toggle.is-on {

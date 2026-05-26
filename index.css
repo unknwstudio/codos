@@ -1,3 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =============================================================================
+   Landing interactions — button hovers + link/affordance transitions.
+   The landing is inline-styled with token var()s; these class hooks add the
+   :hover / :active states (inline styles can't express pseudo-classes).
+   All timing comes from the motion tokens in tokens.css.
+   ========================================================================== */
+.lp-btn {
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out);
+  will-change: transform;
+}
+.lp-btn:hover { transform: translateY(-2px); }
+.lp-btn:active { transform: translateY(0); }
+.lp-btn--filled:hover { box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.5); }
+.lp-btn--outline:hover {
+  border-color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+.lp-btn--accent:hover {
+  background: var(--color-accent-hover);
+  box-shadow: 0 12px 30px -14px var(--color-accent);
+}
+
+/* Text links (nav / footer / inline) */
+.lp-link {
+  transition: color var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+}
+.lp-link:hover { color: var(--color-accent); }
+
+/* FAQ rows */
+.lp-faq > summary { transition: color var(--duration-fast) var(--ease-out); }
+.lp-faq[open] > summary,
+.lp-faq > summary:hover { color: var(--color-accent); }
+.lp-faq > summary .lp-faq-mark { transition: transform var(--duration-base) var(--ease-out); }
+.lp-faq[open] > summary .lp-faq-mark { transform: rotate(45deg); }
+
+/* Partner logos / cards lift */
+.lp-logo { transition: opacity var(--duration-base) var(--ease-out), filter var(--duration-base) var(--ease-out); }
+.lp-logo:hover { opacity: 1 !important; }
+.lp-card { transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out); }
+.lp-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.35); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-btn, .lp-card, .lp-logo, .lp-faq > summary, .lp-faq .lp-faq-mark { transition: none; }
+  .lp-btn:hover, .lp-card:hover { transform: none; }
+}

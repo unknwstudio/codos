@@ -117,6 +117,13 @@
   /* ---- Border widths ---- */
   --border-thin: 1px;
 
+  /* ---- Motion ---- centralized easing + durations for transitions/reveals */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 700ms;
+
   /* ---- Responsive layout ----
      Breakpoints are the single source for layout switches (the JS `useIsMobile`
      helper mirrors --bp-md). The site is NOT container-locked: content uses a

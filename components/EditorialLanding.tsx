@@ -299,7 +299,7 @@ function HowItWorksSection() {
 
   return (
     <section id="how" ref={ref} style={{ ...SECTION, overflow: 'hidden' }}>
-      <SectionHead kicker={COPY.howKicker} title={COPY.howTitle} titleMaxW="22ch" />
+      <Reveal><SectionHead kicker={COPY.howKicker} title={COPY.howTitle} titleMaxW="22ch" /></Reveal>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
         {COPY.howSteps.map((s, i) => {
           const delay = i * 280;
@@ -313,7 +313,7 @@ function HowItWorksSection() {
                 willChange: 'transform, opacity',
               }}
             >
-              <Panel style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
+              <Panel hover style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h2)', lineHeight: 1, color: 'var(--color-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
                   <Chip>{s.time}</Chip>
@@ -365,13 +365,48 @@ function SectionHead({ kicker, title, sub, center = false, titleMaxW }: {
 }
 
 // A standard panel/card surface.
-function Panel({ children, highlight = false, style }: { children: React.ReactNode; highlight?: boolean; style?: CSSProperties }) {
+function Panel({ children, highlight = false, hover = false, style }: { children: React.ReactNode; highlight?: boolean; hover?: boolean; style?: CSSProperties }) {
   return (
-    <div style={{
+    <div className={hover ? 'lp-card' : undefined} style={{
       background: highlight ? 'var(--color-highlight)' : 'var(--color-panel)',
       color: highlight ? 'var(--color-highlight-contrast)' : 'var(--color-text)',
       borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)', ...style,
     }}>
+      {children}
+    </div>
+  );
+}
+
+// Scroll-reveal wrapper — fades + lifts (+ slight blur) its child in when it
+// scrolls into view. Honours prefers-reduced-motion (renders shown immediately).
+function Reveal({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(true);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setShown(true); io.disconnect(); }
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{
+        ...style,
+        opacity: shown ? 1 : 0,
+        transform: shown ? 'none' : 'translateY(26px)',
+        filter: shown ? 'none' : 'blur(5px)',
+        transition: `opacity var(--duration-slow) var(--ease-out) ${delay}ms, transform var(--duration-slow) var(--ease-out) ${delay}ms, filter var(--duration-slow) var(--ease-out) ${delay}ms`,
+        willChange: 'opacity, transform',
+      }}
+    >
       {children}
     </div>
   );
@@ -405,18 +440,18 @@ function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVis
         gap: isMobile ? 'var(--space-5)' : 'var(--space-8)', alignItems: 'start',
         position: 'relative', zIndex: 1,
       }}>
-        <div>
+        <Reveal>
           <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
           <p style={sub}>{tagline}</p>
-        </div>
-        <div style={{ minWidth: 0 }}>
+        </Reveal>
+        <Reveal delay={90} style={{ minWidth: 0 }}>
           <h2 style={heading}>
             <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
             <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
           </h2>
           {rightSub ? <p style={sub}>{rightSub}</p> : null}
           <div style={{ marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>{children}</div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -678,9 +713,9 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         <img src={LOGO_SRC} alt="Codos" style={{ height: 'clamp(13px, 1.15vw, 19px)', width: 'auto', display: 'block' }} />
         <nav style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-6)', fontSize: 'var(--text-body-sm)' }}>
           {!isMobile && COPY.nav.map((n) => (
-            <a key={n.label} href={n.href} style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{n.label}</a>
+            <a key={n.label} href={n.href} className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{n.label}</a>
           ))}
-          <a href="#demo" onClick={onCta} style={{
+          <a href="#demo" onClick={onCta} className="lp-btn lp-btn--accent" style={{
             display: 'inline-flex', alignItems: 'center',
             background: 'var(--color-accent)', color: 'var(--color-accent-contrast)',
             padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-full)',
@@ -734,8 +769,8 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
             {COPY.heroLede}
           </p>
           <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-5)', flexWrap: 'wrap' }}>
-            <a href="#demo" onClick={onCta} style={btnFilled}>{COPY.ctaPrimary}</a>
-            <a href={`mailto:${COPY.founderEmail}`} style={btnOutline}>{COPY.heroCtaSecondary}</a>
+            <a href="#demo" onClick={onCta} className="lp-btn lp-btn--filled" style={btnFilled}>{COPY.ctaPrimary}</a>
+            <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={btnOutline}>{COPY.heroCtaSecondary}</a>
           </div>
         </div>
 
@@ -751,6 +786,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
             {PARTNER_LOGOS.map((l) => (
               <img
                 key={l.alt}
+                className="lp-logo"
                 src={l.src}
                 alt={l.alt}
                 style={{ height: `calc(${l.h} * clamp(16px, 1.7vw, 24px))`, width: 'auto', display: 'block', opacity: 0.72 }}
@@ -788,22 +824,24 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
       {/* WHO IT'S FOR */}
       <section style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
-        <SectionHead kicker={COPY.whoKicker} title={COPY.whoTitle} titleMaxW="24ch" />
+        <Reveal><SectionHead kicker={COPY.whoKicker} title={COPY.whoTitle} titleMaxW="24ch" /></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
-          {COPY.who.map((w) => (
-            <Panel key={w.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', height: '100%', boxSizing: 'border-box' }}>
-              <Chip>{w.range}</Chip>
-              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{w.name}</div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{w.body}</div>
-            </Panel>
+          {COPY.who.map((w, i) => (
+            <Reveal key={w.name} delay={i * 90} style={{ height: '100%' }}>
+              <Panel hover style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', height: '100%', boxSizing: 'border-box' }}>
+                <Chip>{w.range}</Chip>
+                <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{w.name}</div>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{w.body}</div>
+              </Panel>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* BUILD VS BUY */}
       <section style={SECTION}>
-        <SectionHead kicker="analysis" title={COPY.buildVsBuyTitle} sub={COPY.buildVsBuySub} titleMaxW="18ch" />
-        <Panel style={{ padding: 0, overflow: 'hidden' }}>
+        <Reveal><SectionHead kicker="analysis" title={COPY.buildVsBuyTitle} sub={COPY.buildVsBuySub} titleMaxW="18ch" /></Reveal>
+        <Reveal delay={90}><Panel style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.4fr 1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-4) var(--space-6)', borderBottom: 'var(--border-thin) solid var(--color-border-strong)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
             {!isMobile && <div>Metric</div>}
             <div>Build it yourself</div>
@@ -818,7 +856,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
               </div>
             </div>
           ))}
-        </Panel>
+        </Panel></Reveal>
       </section>
 
       {/* HOW IT WORKS */}
@@ -826,12 +864,13 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
       {/* TEAM */}
       <section id="team" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
-        <SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} center titleMaxW="20ch" />
+        <Reveal><SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} center titleMaxW="20ch" /></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 'var(--space-4)', maxWidth: '64rem', margin: '0 auto' }}>
-          {COPY.team.map((p) => {
+          {COPY.team.map((p, i) => {
             const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
             return (
-              <Panel key={p.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
+              <Reveal key={p.name} delay={i * 100}>
+              <Panel hover style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box', height: '100%' }}>
                 <div style={{ aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-panel-chip)' }}>
                   <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
                 </div>
@@ -840,9 +879,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-accent)', marginTop: 'var(--space-2)' }}>{p.role}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                  {p.bio.map((b, i) => <div key={i} style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-muted)' }}>{b}</div>)}
+                  {p.bio.map((b, j) => <div key={j} style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-muted)' }}>{b}</div>)}
                 </div>
               </Panel>
+              </Reveal>
             );
           })}
         </div>
@@ -850,22 +890,23 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
       {/* FAQ */}
       <section id="faq" style={SECTION}>
-        <SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} center titleMaxW="18ch" />
-        <div style={{ maxWidth: '52rem', margin: '0 auto' }}>
+        <Reveal><SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} center titleMaxW="18ch" /></Reveal>
+        <Reveal delay={90} style={{ maxWidth: '52rem', margin: '0 auto' }}>
           {COPY.faq.map((f, i) => (
-            <details key={f.q} open={i === 0} style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
+            <details key={f.q} open={i === 0} className="lp-faq" style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
               <summary style={{ listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)', cursor: 'pointer', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.2 }}>
                 <span style={{ flex: 1 }}>{f.q}</span>
-                <span style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)' }}>+</span>
+                <span className="lp-faq-mark" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)', display: 'inline-block' }}>+</span>
               </summary>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)', marginTop: 'var(--space-3)', maxWidth: '48ch' }}>{f.a}</div>
             </details>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       {/* CLOSING CTA */}
       <section id="demo" style={SECTION}>
+        <Reveal>
         <div className="theme-dark" style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-bg)', color: 'var(--color-text)', borderRadius: 'var(--radius-xl)', padding: isMobile ? 'var(--space-8) var(--space-5)' : 'var(--space-12) var(--space-10)' }}>
           <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', right: '-6%', top: '50%', transform: 'translateY(-50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '36rem' }}>
@@ -874,11 +915,12 @@ export default function EditorialLanding({ onCtaClick }: Props) {
             </h2>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)', color: 'var(--color-muted)', margin: 'var(--space-5) 0 0' }}>{COPY.closingSub}</p>
             <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)', flexWrap: 'wrap' }}>
-              <a href="#" onClick={handleCta} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-text)', color: 'var(--color-bg)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', textDecoration: 'none' }}>{COPY.ctaPrimary}</a>
-              <a href={`mailto:${COPY.founderEmail}`} style={{ display: 'inline-flex', alignItems: 'center', background: 'transparent', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', border: 'var(--border-thin) solid var(--color-border-strong)', textDecoration: 'none' }}>{COPY.heroCtaSecondary}</a>
+              <a href="#" onClick={handleCta} className="lp-btn lp-btn--filled" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-text)', color: 'var(--color-bg)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', textDecoration: 'none' }}>{COPY.ctaPrimary}</a>
+              <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={{ display: 'inline-flex', alignItems: 'center', background: 'transparent', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', border: 'var(--border-thin) solid var(--color-border-strong)', textDecoration: 'none' }}>{COPY.heroCtaSecondary}</a>
             </div>
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* FOOTER */}
@@ -888,9 +930,9 @@ export default function EditorialLanding({ onCtaClick }: Props) {
           <span>© {new Date().getFullYear()} Codos, Inc.</span>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
-          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Privacy</a>
-          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Terms</a>
-          <a href={`mailto:${COPY.founderEmail}`} style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{COPY.founderEmail}</a>
+          <a href="#" className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Privacy</a>
+          <a href="#" className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Terms</a>
+          <a href={`mailto:${COPY.founderEmail}`} className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{COPY.founderEmail}</a>
         </div>
       </footer>
     </div>
