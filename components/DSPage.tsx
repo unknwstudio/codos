@@ -45,6 +45,7 @@ const HEADLINE_SCALE = [
 ];
 
 const BODY_SCALE = [
+  { tw: 'text-intro', token: '--text-intro', lead: '--leading-intro', label: 'Intro (subhead)' },
   { tw: 'text-body-lg', token: '--text-body-lg', lead: '--leading-body-lg', label: 'Body Large' },
   { tw: 'text-body-md', token: '--text-body', lead: '--leading-body', label: 'Body' },
   { tw: 'text-body-sm', token: '--text-body-sm', lead: '--leading-body-sm', label: 'Body Small' },
@@ -60,8 +61,9 @@ const WEIGHTS = [
 ];
 
 const COLORS = [
-  '--color-bg', '--color-surface', '--color-text', '--color-muted',
+  '--color-bg', '--color-surface', '--color-surface-strong', '--color-text', '--color-muted',
   '--color-border', '--color-accent', '--color-accent-hover', '--color-accent-contrast',
+  '--color-panel', '--color-highlight', '--color-status-live',
   '--color-success', '--color-warning', '--color-danger', '--color-info',
 ];
 

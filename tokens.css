@@ -63,21 +63,30 @@
   --font-sans: 'Urbanist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-serif: "Fraunces", "Instrument Serif", Georgia, serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
-  /* Aliases consumed by /ds + ds.css (now resolve to the real product fonts) */
-  --font-headline: var(--font-serif);
-  --font-body: var(--font-sans);
+  /* DM Mono — the editorial brand body/UI face (loaded in index.html). */
+  --font-dm-mono: "DM Mono", "Geist Mono", ui-monospace, monospace;
+  /* Brand semantic roles (match the Figma frames + the /ds reference text):
+     headline = GT Alpina Typewriter (the @font-face'd typewriter serif above),
+     body/UI  = DM Mono. */
+  --font-headline: 'GT Alpina Typewriter', "Fraunces", Georgia, serif;
+  --font-body: var(--font-dm-mono);
 
   /* ---- Type scale: size + paired line-height ----
-     Headline roles render in --font-headline; body roles in --font-body. */
-  --text-display: 4rem;     --leading-display: 1.05;
-  --text-h1: 2.75rem;       --leading-h1: 1.1;
-  --text-h2: 2rem;          --leading-h2: 1.15;
-  --text-h3: 1.5rem;        --leading-h3: 1.2;
-  --text-h4: 1.125rem;      --leading-h4: 1.35;
-  --text-body-lg: 1.125rem; --leading-body-lg: 1.6;
-  --text-body: 1rem;        --leading-body: 1.6;
-  --text-body-sm: 0.875rem; --leading-body-sm: 1.55;
-  --text-caption: 0.75rem;  --leading-caption: 1.45;
+     Sizes are fluid clamp()s — one scale that holds from mobile → wide desktop,
+     centralized here so /ds and every page share it. Maxima match the brand
+     (Figma) desktop sizes; minima keep mobile legible. Headline roles render in
+     --font-headline; body roles in --font-body. */
+  --text-display: clamp(2.75rem, 0.5rem + 6.7vw, 8.125rem);  --leading-display: 1.0;  /* hero → 130px */
+  --text-h1: clamp(2rem, 1rem + 2.8vw, 3.75rem);             --leading-h1: 1.05;       /* section → 60px */
+  --text-h2: clamp(1.6rem, 1rem + 1.7vw, 2.5rem);            --leading-h2: 1.1;        /* → 40px */
+  --text-h3: clamp(1.375rem, 0.9rem + 1.2vw, 1.875rem);      --leading-h3: 1.15;       /* → 30px */
+  --text-h4: clamp(1.125rem, 1rem + 0.5vw, 1.3125rem);       --leading-h4: 1.3;        /* → 21px */
+  --text-intro: clamp(1.125rem, 0.85rem + 1.1vw, 1.875rem);  --leading-intro: 1.35;    /* DM-Mono subhead → 30px */
+  --text-body-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);   --leading-body-lg: 1.6;   /* → 20px */
+  --text-body: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);  --leading-body: 1.6;      /* → 17px */
+  --text-body-sm: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem); --leading-body-sm: 1.55; /* → 14px */
+  --text-label: clamp(0.8125rem, 0.75rem + 0.3vw, 0.9375rem);   --leading-label: 1.3;  /* uppercase eyebrow → 15px */
+  --text-caption: 0.75rem;  --leading-caption: 1.45;          /* 12px, fixed */
 
   /* ---- Font weights ---- */
   --font-weight-thin: 100;
@@ -130,6 +139,11 @@
   --color-brand: #F26B1F;
   --color-brand-ring: #F26B1F1f; /* brand @ ~12% alpha (focus ring) */
 
+  /* Primitive accents used by the brand product mocks (hero/diagnostic/graph) */
+  --color-mist: #d9d9d9;   /* neutral product-mock panel surface */
+  --color-sun: #ffe100;    /* highlight yellow (graph "judge" node) */
+  --color-signal: #00c22d; /* live / "listening" status green */
+
   /* Editorial state inks + soft fills (notices) */
   --color-danger-ink: #7a3a1c;
   --color-danger-bg: rgba(181, 87, 43, 0.08);
@@ -141,6 +155,7 @@
   /* ---- Semantic tokens (editorial / default theme) ---- */
   --color-bg: var(--color-cream);
   --color-surface: var(--color-white);
+  --color-surface-strong: var(--color-paper);
   --color-text: var(--color-ink);
   --color-muted: var(--color-ink-soft);
   --color-faint: var(--color-ink-55);
@@ -153,4 +168,35 @@
   --color-warning: #9a6a00;
   --color-danger: var(--color-danger-ink);
   --color-info: #1b6ec2;
+
+  /* Brand product-mock roles (consumed by hero/diagnostic/graph) */
+  --color-panel: var(--color-mist);            /* mock UI panel / device surface */
+  --color-panel-chip: var(--color-white);      /* white chips inside panels */
+  --color-highlight: var(--color-sun);         /* emphasized "judge" node */
+  --color-highlight-contrast: var(--color-ink);/* text on --color-highlight */
+  --color-status-live: var(--color-signal);    /* live status indicator */
+}
+
+/* ============================================================
+   DARK THEME — opt-in via class `theme-dark` (app pages:
+   download, and later quiz/report). Overrides the SAME semantic
+   tokens with dark values, so components stay theme-agnostic and
+   reference only roles (bg/surface/text/muted/border/accent…).
+   This replaces the old literal value-named tokens.
+   ============================================================ */
+.theme-dark {
+  --color-bg: #000000;
+  --color-surface: rgba(255, 255, 255, 0.02);
+  --color-surface-strong: rgba(255, 255, 255, 0.04);
+  --color-text: #ffffff;
+  --color-muted: #9ca3af;
+  --color-faint: rgba(255, 255, 255, 0.55);
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-border-strong: rgba(255, 255, 255, 0.22);
+  --color-accent: #f97316;        /* orange-500 — the app accent */
+  --color-accent-hover: #fb923c;  /* orange-400 */
+  --color-accent-contrast: #ffffff;
+  --color-panel: rgba(255, 255, 255, 0.04);
+  --color-panel-chip: rgba(255, 255, 255, 0.08);
+  --color-highlight-contrast: #000000;
 }
