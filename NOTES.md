@@ -116,3 +116,26 @@ is byte-identical across all three frames (one shared asset).
   headless-Chrome screenshots of mid-scroll states intermittently render the 2.6MB
   PNG blank (cold-load decode race under virtual-time); this is a screenshot
   artifact, not a runtime bug — real browsers paint it (decode once, cached).
+
+---
+
+## Task 3 — diagnostic section, remove switcher
+
+- **Killed the switcher entirely.** Deleted `ProductShowcase` (the interviews/
+  graph/transformation tab UI + its `tab` state) and the whole tree it exclusively
+  used: `VoiceOrb`, `InterviewMock`, `ContextGraphMock`, `AccountReviewMock`,
+  `ScrollableMock`, `NodeBox`, `useTween`, `TweenedFigure`, `TweenedHeadcount`,
+  `PilotMetric` (~860 lines of now-dead code). Confirmed via grep none were used by
+  any kept section before deleting. Removed the now-unused `useMemo` import.
+- Built a flat `DiagnosticSection` matching Figma 55:2 — no tabs, no state:
+  `_stepOne` kicker + "A listening agent — not a form." tagline (left), the mixed
+  headline "conduct diagnostic.Interviews" (verb in headline face, method in DM
+  Mono) (right), and a live interview mock panel (window dots, centred
+  label/session, "Listening" status pill, the particle orb, "CODOS AI" chip,
+  centred transcript quote, footer controls).
+- Shared primitives added for reuse by the graph section: `Chip`, `StepHeader`
+  (the two-column `_stepN` + verb/method header), and a `Dot`. All token-driven
+  (`--color-panel/panel-chip/status-live`, `--text-h1/h4/intro/caption`,
+  `--space-*`, `--radius-*`, fonts) — no raw hex/px.
+- Verified visually by rendering the section in isolation (clean match to 55:2).
+  Added a stable `data-section="diagnostic"` hook on the section.

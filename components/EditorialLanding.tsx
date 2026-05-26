@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Editorial Landing — V2 from Claude Design handoff (Codos)
@@ -51,6 +51,43 @@ const COPY = {
     { num: '03', label: 'cyber·Fund' },
     { num: '04', label: 'Everclear' },
   ],
+
+  // Diagnostic section (Figma 55:2)
+  diagnostic: {
+    step: '_stepOne',
+    verb: 'conduct ',
+    method: 'diagnostic.Interviews',
+    tagline: 'A listening agent — not a form.',
+    cardLabel: 'diagnostic interviews',
+    session: ['Session ID4611.4', 'VP Sales', '01:55'],
+    status: 'Listening',
+    agentTag: 'CODOS AI',
+    quote: 'Most start inbound — a founder demo request. Then AE qualifies, SE joins for technical depth..',
+    footLeft: ['Mic on', 'Phase 2 of 5', 'Go-to-market'],
+    footRight: ['Pause', 'End turn'],
+  },
+
+  // Context graph section (Figma 55:22)
+  graph: {
+    step: '_stepTwo',
+    verb: 'setting ',
+    method: 'contexts.Graph',
+    tagline: 'Every signal, routed, deduped, written to record.',
+    sources: { label: '.sources', chips: ['Interviews', 'Org chart', 'Metrics & OKRs', 'Meeting notes', 'Notion', 'Slack', 'Gmail', 'Hubspot', 'Google Sheets', 'Many more..'] },
+    rawData: { label: '.raw-data', chips: ['MD', 'PDF', 'XLSX', 'transcripts'] },
+    observers: [
+      { kicker: 'observer', label: '.people', chips: ['roles', 'depts', 'OKRs'] },
+      { kicker: 'observer', label: '.product', chips: ['tech stack', 'systems'] },
+      { kicker: 'observer', label: '.operations', chips: ['process', 'financials'] },
+      { kicker: 'observer', label: '.market', chips: ['competitors', 'customers'] },
+    ],
+    judge: { label: 'company-merge-judge', chips: ['dedup', 'resolve', 'write plan'] },
+    vaults: [
+      { kicker: 'vault', label: '.company', chips: ['stable facts'] },
+      { kicker: 'vault', label: '.engagement', chips: ['operational record'] },
+      { kicker: 'vault', label: '.working-memory', chips: ['synthesis & priorities'] },
+    ],
+  },
 
   approachKicker: 'Our approach',
   approachTitle: 'We help you become AI-native.',
@@ -230,871 +267,6 @@ function LogoPill({ label, dark = false }: { label: string; dark?: boolean }) {
   );
 }
 
-// ───────────────── useTween + figures ─────────────────
-function useTween(from: number, to: number, { duration = 1200, delay = 0 }: { duration?: number; delay?: number } = {}) {
-  const [value, setValue] = useState(from);
-  useEffect(() => {
-    let raf = 0;
-    let startAt = 0;
-    let cancelled = false;
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-    const tick = (now: number) => {
-      if (cancelled) return;
-      if (!startAt) startAt = now;
-      const elapsed = now - startAt - delay;
-      if (elapsed < 0) { raf = requestAnimationFrame(tick); return; }
-      const t = Math.min(1, elapsed / duration);
-      setValue(from + (to - from) * ease(t));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => { cancelled = true; cancelAnimationFrame(raf); };
-  }, [from, to, duration, delay]);
-  return value;
-}
-
-function TweenedFigure({ from, to, decimals, prefix = '', suffix = '', delay = 0, serif, ink }: {
-  from: number; to: number; decimals: number; prefix?: string; suffix?: string; delay?: number; serif: string; ink: string;
-}) {
-  const v = useTween(from, to, { duration: 1300, delay });
-  const display = v.toFixed(decimals);
-  return (
-    <div style={{
-      fontFamily: serif, fontWeight: 400,
-      fontSize: 52, lineHeight: 1, letterSpacing: -1.5,
-      marginTop: 14, color: ink,
-      display: 'flex', alignItems: 'baseline',
-      fontVariantNumeric: 'tabular-nums',
-    }}>
-      {prefix && <span style={{ fontSize: 26, marginRight: 2 }}>{prefix}</span>}
-      {display}
-      {suffix && <span style={{ fontSize: 26, marginLeft: 2 }}>{suffix}</span>}
-    </div>
-  );
-}
-
-function TweenedHeadcount({ target, delay = 0, serif, ink }: { target: number; delay?: number; serif: string; ink: string }) {
-  const v = useTween(0, target, { duration: 900, delay });
-  return (
-    <div style={{
-      fontFamily: serif, fontSize: 28, fontWeight: 400, letterSpacing: -0.6,
-      marginTop: 12, color: ink, lineHeight: 1,
-      fontVariantNumeric: 'tabular-nums',
-    }}>
-      {Math.round(v)}
-    </div>
-  );
-}
-
-function PilotMetric({ from, to, decimals, prefix = '', suffix = '', delay = 0, serif, accent }: {
-  from: number; to: number; decimals: number; prefix?: string; suffix?: string; delay?: number; serif: string; accent: string;
-}) {
-  const v = useTween(from, to, { duration: 1200, delay });
-  return (
-    <span style={{
-      fontFamily: serif, fontSize: 34, fontWeight: 400, letterSpacing: -0.8, color: accent,
-      fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
-    }}>
-      {prefix}{v.toFixed(decimals)}{suffix}
-    </span>
-  );
-}
-
-// ───────────────── VoiceOrb (canvas) ─────────────────
-type OrbState = 'speaking' | 'listening' | 'thinking';
-type OrbPalette = 'terracotta' | 'emerald' | 'amber';
-
-function VoiceOrb({ state = 'speaking', palette = 'terracotta' }: { state?: OrbState; palette?: OrbPalette }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stateRef = useRef(state);
-
-  const PALETTES = useMemo(() => ({
-    terracotta: { tint: { r: 242, g: 107, b: 31 }, grads: [{ r: 255, g: 234, b: 215 }, { r: 245, g: 170, b: 110 }, { r: 210, g: 90, b: 30 }, { r: 90, g: 30, b: 10 }] },
-    emerald:    { tint: { r: 16, g: 185, b: 129 }, grads: [{ r: 209, g: 250, b: 229 }, { r: 52, g: 211, b: 153 }, { r: 4, g: 120, b: 87 }, { r: 6, g: 78, b: 59 }] },
-    amber:      { tint: { r: 245, g: 158, b: 11 }, grads: [{ r: 254, g: 243, b: 199 }, { r: 251, g: 191, b: 36 }, { r: 180, g: 83, b: 9 }, { r: 69, g: 26, b: 3 }] },
-  }), []);
-
-  useEffect(() => { stateRef.current = state; }, [state]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let cssSize = canvas.clientWidth || 320;
-    const applySize = () => {
-      cssSize = canvas.clientWidth || cssSize;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = cssSize * dpr;
-      canvas.height = cssSize * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    applySize();
-    const bootRaf = requestAnimationFrame(applySize);
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(applySize) : null;
-    ro && ro.observe(canvas);
-
-    const startT = performance.now();
-    let rafId = 0;
-    let amp = 0;
-    let targetAmp = 0;
-
-    const synth = setInterval(() => {
-      const nt = (performance.now() - startT) / 1000;
-      const s = stateRef.current;
-      if (s === 'speaking') {
-        const w = Math.sin(nt * 4.2) * 0.35 + Math.sin(nt * 7.1) * 0.22 + Math.sin(nt * 11.5) * 0.14;
-        targetAmp = Math.max(0.2, Math.min(1, 0.55 + w * 0.45));
-      } else if (s === 'listening') {
-        const w = Math.sin(nt * 3.3) * 0.3 + Math.sin(nt * 6.7) * 0.18;
-        targetAmp = Math.max(0.15, Math.min(0.85, 0.4 + w * 0.4));
-      } else if (s === 'thinking') {
-        targetAmp = 0.22 + Math.sin(nt * 0.7) * 0.05;
-      } else {
-        targetAmp = 0;
-      }
-    }, 50);
-
-    const pal = PALETTES[palette] || PALETTES.terracotta;
-    const draw = () => {
-      const now = (performance.now() - startT) / 1000;
-      amp += (targetAmp - amp) * 0.12;
-
-      const CX = cssSize / 2;
-      const CY = cssSize / 2;
-      const BASE_R = cssSize * 0.276;
-      const breath = Math.sin(now * (Math.PI / 2)) * 0.02;
-      const s = stateRef.current;
-      const audioDrive = s === 'thinking' ? 0 : amp;
-      const r = BASE_R * (1 + breath + audioDrive * 0.1);
-      const tintRGBA = (a: number) => `rgba(${pal.tint.r},${pal.tint.g},${pal.tint.b},${a})`;
-
-      ctx.clearRect(0, 0, cssSize, cssSize);
-
-      ctx.save();
-      ctx.filter = 'blur(50px)';
-      const R1 = r * 1.95;
-      const g1 = ctx.createRadialGradient(CX, CY, 0, CX, CY, R1);
-      g1.addColorStop(0, tintRGBA(0.28 + amp * 0.22));
-      g1.addColorStop(0.55, tintRGBA(0.08));
-      g1.addColorStop(1, tintRGBA(0));
-      ctx.fillStyle = g1;
-      ctx.beginPath();
-      ctx.arc(CX, CY, R1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.filter = 'blur(24px)';
-      const R2 = r * 1.32;
-      const g2 = ctx.createRadialGradient(CX, CY, 0, CX, CY, R2);
-      g2.addColorStop(0, tintRGBA(0.4));
-      g2.addColorStop(0.7, tintRGBA(0.08));
-      g2.addColorStop(1, tintRGBA(0));
-      ctx.fillStyle = g2;
-      ctx.beginPath();
-      ctx.arc(CX, CY, R2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      const rot = s === 'thinking' ? now * 0.5 : now * 0.15;
-      const disp = 5 + audioDrive * 18;
-      ctx.save();
-      ctx.filter = 'blur(0.6px)';
-      ctx.beginPath();
-      const steps = 180;
-      for (let i = 0; i <= steps; i++) {
-        const a = (i / steps) * Math.PI * 2;
-        const n =
-          Math.sin(a * 3 + now * 0.8 + rot) * 0.5 +
-          Math.sin(a * 5 - now * 0.55) * 0.3 +
-          Math.sin(a * 7 + now * 1.1 + rot * 0.3) * 0.2;
-        const rr = r + n * disp;
-        const x = CX + Math.cos(a) * rr;
-        const y = CY + Math.sin(a) * rr;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      const core = ctx.createRadialGradient(CX - r * 0.22, CY - r * 0.28, r * 0.08, CX, CY, r * 1.15);
-      const p = pal.grads;
-      core.addColorStop(0, `rgb(${p[0].r},${p[0].g},${p[0].b})`);
-      core.addColorStop(0.32, `rgb(${p[1].r},${p[1].g},${p[1].b})`);
-      core.addColorStop(0.72, `rgb(${p[2].r},${p[2].g},${p[2].b})`);
-      core.addColorStop(1, `rgb(${p[3].r},${p[3].g},${p[3].b})`);
-      ctx.fillStyle = core;
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.filter = 'blur(14px)';
-      const hx = CX - r * 0.24;
-      const hy = CY - r * 0.32;
-      const hl = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.62);
-      hl.addColorStop(0, 'rgba(255,255,255,0.6)');
-      hl.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = hl;
-      ctx.beginPath();
-      ctx.arc(hx, hy, r * 0.62, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.filter = 'blur(6px)';
-      ctx.fillStyle = tintRGBA(0.5);
-      ctx.beginPath();
-      ctx.arc(CX, CY, r * 0.9, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      rafId = requestAnimationFrame(draw);
-    };
-    rafId = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      cancelAnimationFrame(bootRaf);
-      clearInterval(synth);
-      ro && ro.disconnect();
-    };
-  }, [palette, PALETTES]);
-
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
-}
-
-// ───────────────── InterviewMock ─────────────────
-function InterviewMock() {
-  const SCRIPT: { state: OrbState; who: 'AI' | 'you' | null; text: string; ms: number }[] = [
-    { state: 'speaking',  who: 'AI',  text: 'Tell me about your go-to-market motion. How do deals typically start?', ms: 4800 },
-    { state: 'listening', who: 'you', text: 'Most start inbound — a founder demo request. Then AE qualifies, SE joins for technical depth…', ms: 5600 },
-    { state: 'thinking',  who: null,  text: 'Analyzing…', ms: 1800 },
-    { state: 'speaking',  who: 'AI',  text: 'Got it. What percentage convert from demo to paid pilot?', ms: 3600 },
-    { state: 'listening', who: 'you', text: 'Roughly 34% last quarter. Faster on sub-500-seat. Enterprise drags to 8 weeks…', ms: 5200 },
-    { state: 'thinking',  who: null,  text: 'Analyzing…', ms: 1600 },
-    { state: 'speaking',  who: 'AI',  text: "Noted. Let's map how your team handles qualification today.", ms: 4200 },
-  ];
-
-  const [idx, setIdx] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const turn = SCRIPT[idx];
-    const t = setTimeout(() => setIdx((i) => (i + 1) % SCRIPT.length), turn.ms);
-    return () => clearTimeout(t);
-  }, [idx]);
-
-  useEffect(() => {
-    const start = Date.now();
-    const iv = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
-    return () => clearInterval(iv);
-  }, []);
-
-  const turn = SCRIPT[idx];
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const ss = String(elapsed % 60).padStart(2, '0');
-
-  const bg = '#faf5ec';
-  const text = '#1a1a1a';
-  const dim = 'rgba(26,26,26,0.55)';
-  const border = 'rgba(26,26,26,0.08)';
-  const panel = 'rgba(26,26,26,0.02)';
-
-  const statusLabel: Record<OrbState, string> = {
-    listening: 'Listening',
-    speaking: 'AI speaking',
-    thinking: 'Thinking',
-  };
-  const statusColor: Record<OrbState, string> = {
-    listening: '#10b981',
-    speaking: ACCENT,
-    thinking: '#f59e0b',
-  };
-
-  return (
-    <div style={{
-      background: bg,
-      border: `1px solid ${border}`,
-      borderRadius: 12,
-      overflow: 'hidden',
-      fontFamily: 'Urbanist, sans-serif',
-      color: text,
-      aspectRatio: '16/10',
-      display: 'grid',
-      gridTemplateRows: 'auto 1fr auto',
-      position: 'relative',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `1px solid ${border}`, fontSize: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700 }}>›_</div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>Diagnostic interviews</div>
-            <div style={{ fontSize: 10, color: dim, marginTop: 1, whiteSpace: 'nowrap' }}>Session · VP Sales · {mm}:{ss}</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor[turn.state], boxShadow: `0 0 10px ${statusColor[turn.state]}` }} />
-          <span style={{ color: dim }}>{statusLabel[turn.state]}</span>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '24px 24px 16px', position: 'relative' }}>
-        <div style={{ width: '52%', maxWidth: 360, aspectRatio: '1/1' }}>
-          <VoiceOrb
-            state={turn.state}
-            palette={turn.state === 'listening' ? 'emerald' : turn.state === 'thinking' ? 'amber' : 'terracotta'}
-          />
-        </div>
-        <div style={{ maxWidth: '78%', minHeight: 56, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          {turn.who && (
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.2, color: turn.who === 'AI' ? ACCENT : dim, fontWeight: 600, fontFamily: '"Geist Mono", monospace' }}>
-              {turn.who === 'AI' ? 'AI · Codos' : 'You'}
-            </div>
-          )}
-          <div
-            key={idx}
-            style={{
-              fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: 18, lineHeight: 1.4, letterSpacing: -0.3,
-              color: turn.state === 'thinking' ? dim : text,
-              fontStyle: turn.state === 'thinking' ? 'italic' : 'normal',
-              animation: 'interviewFade 500ms ease',
-            }}
-          >
-            {turn.text}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: `1px solid ${border}`, background: panel, fontSize: 11 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: dim }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3" />
-            </svg>
-            Mic on
-          </div>
-          <div>Phase 2 of 5 · Go-to-market</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ padding: '5px 12px', border: `1px solid ${border}`, borderRadius: 6, color: dim }}>Pause</div>
-          <div style={{ padding: '5px 12px', background: ACCENT, color: '#fff', borderRadius: 6, fontWeight: 600 }}>End turn</div>
-        </div>
-      </div>
-
-      <style>{`@keyframes interviewFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-    </div>
-  );
-}
-
-// ───────────────── ContextGraph ─────────────────
-function NodeBox({ x, y, w, h, tone = 'plain', label, sub }: { x: number; y: number; w: number; h: number; tone?: 'plain' | 'accent' | 'emphasis'; label: string; sub: string }) {
-  const pct = (n: number, total: number) => `${(n / total) * 100}%`;
-  const ink = '#1a1a1a';
-  const bg = '#faf5ec';
-  const toneStyles: Record<string, { bg: string; border: string; labelColor: string; subColor: string }> = {
-    plain:    { bg, border: 'rgba(26,26,26,0.22)', labelColor: ink, subColor: 'rgba(26,26,26,0.55)' },
-    accent:   { bg: 'rgba(242,107,31,0.07)', border: ACCENT, labelColor: ACCENT, subColor: 'rgba(26,26,26,0.6)' },
-    emphasis: { bg: ink, border: ink, labelColor: bg, subColor: 'rgba(250,245,236,0.6)' },
-  };
-  const t = toneStyles[tone];
-  return (
-    <div style={{
-      position: 'absolute',
-      left: pct(x, 960), top: pct(y, 510),
-      width: pct(w, 960), height: pct(h, 510),
-      background: t.bg, border: `1px solid ${t.border}`,
-      borderRadius: 8, padding: '8px 14px',
-      display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      boxSizing: 'border-box',
-    }}>
-      <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 12, fontWeight: 500, color: t.labelColor, letterSpacing: 0.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
-      <div style={{ fontSize: 10.5, color: t.subColor, marginTop: 2, letterSpacing: 0.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
-    </div>
-  );
-}
-
-function ContextGraphMock() {
-  const bg = '#faf5ec';
-  const ink = '#1a1a1a';
-  const dim = 'rgba(26,26,26,0.6)';
-  const faint = 'rgba(26,26,26,0.38)';
-  const rule = 'rgba(26,26,26,0.12)';
-  const ruleHi = 'rgba(26,26,26,0.22)';
-  const accent = ACCENT;
-  const serif = '"Fraunces", serif';
-  const sans = 'Urbanist, sans-serif';
-  const mono = '"Geist Mono", monospace';
-
-  const sources = ['Interviews', 'Org chart', 'Metrics & OKRs', 'Meeting notes', 'Notion', 'Slack', 'Gmail', 'Hubspot', 'Google Sheets', 'Many more…'];
-  const observers = [
-    { x: 60,  label: 'observer · people',     sub: 'roles, depts, OKRs' },
-    { x: 270, label: 'observer · product',    sub: 'tech stack, systems' },
-    { x: 480, label: 'observer · operations', sub: 'process, financials' },
-    { x: 690, label: 'observer · market',     sub: 'competitors, customers' },
-  ];
-  const obsY = 140;
-  const obsW = 210, obsH = 64;
-  const vaults = [
-    { x: 80,  label: 'vault · company',         sub: 'stable facts' },
-    { x: 360, label: 'vault · engagement',      sub: 'operational record' },
-    { x: 640, label: 'vault · working-memory',  sub: 'synthesis & priorities' },
-  ];
-  const vaultY = 420;
-  const vaultW = 240, vaultH = 64;
-  const rawData = { x: 360, y: 8, w: 240, h: 60 };
-  const merge = { x: 340, y: 290, w: 280, h: 60 };
-
-  const cb = (n: { x: number; y: number; w?: number; h?: number }) => ({ x: n.x + (n.w ?? obsW) / 2, y: n.y + (n.h ?? obsH) });
-  const ct = (n: { x: number; y: number; w?: number; h?: number }) => ({ x: n.x + (n.w ?? obsW) / 2, y: n.y });
-
-  return (
-    <div style={{ background: bg, borderRadius: 16, padding: '36px 40px 32px', color: ink, fontFamily: sans, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 18, borderBottom: `1px solid ${ruleHi}` }}>
-        <div>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.3, color: accent, textTransform: 'uppercase' }}>§02 · context graph · live</div>
-          <div style={{ fontFamily: serif, fontWeight: 400, fontSize: 28, lineHeight: 1.1, letterSpacing: -0.6, marginTop: 8, color: ink }}>
-            Every signal, <span style={{ fontStyle: 'italic' }}>routed, deduped,</span> written to record.
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 18, fontFamily: mono, fontSize: 10, color: dim, letterSpacing: 0.18, textTransform: 'uppercase' }}>
-          <span>ingest</span><span style={{ color: faint }}>—</span>
-          <span>observe</span><span style={{ color: faint }}>—</span>
-          <span>merge</span><span style={{ color: faint }}>—</span>
-          <span>vault</span>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 26, marginBottom: 6, fontFamily: mono, fontSize: 10, letterSpacing: 0.25, color: dim, textTransform: 'uppercase' }}>01 · sources</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14, justifyContent: 'center' }}>
-        {sources.map((s) => (
-          <div key={s} style={{ padding: '6px 12px', background: 'transparent', border: `1px solid ${ruleHi}`, borderRadius: 999, fontSize: 12, color: ink, fontFamily: mono, letterSpacing: 0.1, whiteSpace: 'nowrap' }}>{s}</div>
-        ))}
-      </div>
-
-      <div style={{ height: 72, position: 'relative', marginBottom: -12 }}>
-        <svg viewBox="0 0 960 72" width="100%" height="72" preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
-          {Array.from({ length: 10 }).map((_, i) => {
-            const x = 72 + i * 90;
-            const d = `M ${x} 0 C ${x} 36, ${480} 36, ${480} 72`;
-            return <path key={i} d={d} stroke={rule} strokeWidth="1" fill="none" strokeDasharray="1 3" />;
-          })}
-          {Array.from({ length: 10 }).map((_, i) => {
-            const x = 72 + i * 90;
-            const d = `M ${x} 0 C ${x} 36, ${480} 36, ${480} 72`;
-            return (
-              <circle key={`dot-${i}`} r="1.8" fill={accent}>
-                <animateMotion dur={`${2.6 + (i % 4) * 0.3}s`} repeatCount="indefinite" begin={`${(i * 0.22) % 2.4}s`} path={d} />
-              </circle>
-            );
-          })}
-        </svg>
-      </div>
-
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '960 / 510' }}>
-        <svg viewBox="0 0 960 510" width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-          <defs>
-            <marker id="cgArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={ruleHi} />
-            </marker>
-          </defs>
-
-          {observers.map((o, i) => {
-            const from = cb(rawData);
-            const to = ct({ ...o, y: obsY, w: obsW, h: obsH });
-            const midY = (from.y + to.y) / 2;
-            const d = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
-            return (
-              <g key={o.label}>
-                <path d={d} stroke={ruleHi} strokeWidth="1" fill="none" markerEnd="url(#cgArrow)" />
-                <circle r="2.5" fill={accent}>
-                  <animateMotion dur={`${2.2 + i * 0.25}s`} repeatCount="indefinite" begin={`${i * 0.35}s`} path={d} />
-                </circle>
-              </g>
-            );
-          })}
-
-          {observers.map((o, i) => {
-            const from = cb({ ...o, y: obsY, w: obsW, h: obsH });
-            const to = ct(merge);
-            const midY = (from.y + to.y) / 2;
-            const d = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
-            return (
-              <g key={`to-merge-${i}`}>
-                <path d={d} stroke={ruleHi} strokeWidth="1" fill="none" markerEnd="url(#cgArrow)" />
-                <circle r="2" fill={ink} opacity="0.7">
-                  <animateMotion dur={`${2.4 + i * 0.2}s`} repeatCount="indefinite" begin={`${0.8 + i * 0.3}s`} path={d} />
-                </circle>
-              </g>
-            );
-          })}
-
-          {vaults.map((v, i) => {
-            const from = cb(merge);
-            const to = ct({ ...v, y: vaultY, w: vaultW, h: vaultH });
-            const midY = (from.y + to.y) / 2;
-            const d = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
-            return (
-              <g key={v.label}>
-                <path d={d} stroke={ruleHi} strokeWidth="1" fill="none" markerEnd="url(#cgArrow)" />
-                <circle r="2" fill={accent} opacity="0.85">
-                  <animateMotion dur={`${2.4 + i * 0.25}s`} repeatCount="indefinite" begin={`${1.4 + i * 0.3}s`} path={d} />
-                </circle>
-              </g>
-            );
-          })}
-        </svg>
-
-        {[
-          { y: rawData.y + rawData.h / 2 - 6, label: '02 · raw' },
-          { y: obsY + obsH / 2 - 6,            label: '03 · observe' },
-          { y: merge.y + merge.h / 2 - 6,      label: '04 · merge' },
-          { y: vaultY + vaultH / 2 - 6,        label: '05 · vault' },
-        ].map((r) => (
-          <div key={r.label} style={{ position: 'absolute', left: 0, top: `${(r.y / 510) * 100}%`, fontFamily: mono, fontSize: 9, color: faint, letterSpacing: 0.2, textTransform: 'uppercase' }}>{r.label}</div>
-        ))}
-
-        <NodeBox x={rawData.x} y={rawData.y} w={rawData.w} h={rawData.h} tone="accent" label="raw-data/" sub="MD · PDF · XLSX · transcripts" />
-        {observers.map((o) => (
-          <NodeBox key={o.label} x={o.x} y={obsY} w={obsW} h={obsH} tone="plain" label={o.label} sub={o.sub} />
-        ))}
-        <NodeBox x={merge.x} y={merge.y} w={merge.w} h={merge.h} tone="emphasis" label="company-merge-judge" sub="dedup · resolve · write plan" />
-        {vaults.map((v) => (
-          <NodeBox key={v.label} x={v.x} y={vaultY} w={vaultW} h={vaultH} tone="plain" label={v.label} sub={v.sub} />
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20, paddingTop: 14, borderTop: `1px solid ${ruleHi}`, fontFamily: mono, fontSize: 10, color: dim, letterSpacing: 0.18, textTransform: 'uppercase' }}>
-        <span>10 sources · 4 observers · 1 judge · 3 vaults</span>
-        <span>updated <span style={{ color: ink }}>&lt; 1 min ago</span></span>
-      </div>
-    </div>
-  );
-}
-
-// ───────────────── AccountReviewMock ─────────────────
-function AccountReviewMock() {
-  const bg = '#faf5ec';
-  const ink = '#1a1a1a';
-  const dim = 'rgba(26,26,26,0.6)';
-  const faint = 'rgba(26,26,26,0.38)';
-  const rule = 'rgba(26,26,26,0.1)';
-  const ruleHi = 'rgba(26,26,26,0.18)';
-  const accent = ACCENT;
-  const risk = '#b5572b';
-  const serif = '"Fraunces", serif';
-  const sans = 'Urbanist, sans-serif';
-  const mono = '"Geist Mono", monospace';
-
-  const kpis = [
-    { label: 'Token coverage',       fromNum: 78,  toNum: 85,  decimals: 0, prefix: '',  suffix: '%', delta: '+7pts',  prev: '78% last week',   dir: 'up' as const },
-    { label: 'Revenue per employee', fromNum: 480, toNum: 500, decimals: 0, prefix: '$', suffix: 'K', delta: '+$20K',  prev: '$480K last week', dir: 'up' as const },
-    { label: 'Headcount',            fromNum: 640, toNum: 621, decimals: 0, prefix: '',  suffix: '',  delta: '−19',    prev: '640 last week',   dir: 'down' as const },
-    { label: 'AI savings, YTD',      fromNum: 7.2, toNum: 8.0, decimals: 1, prefix: '$', suffix: 'M', delta: '+$0.8M', prev: '$7.2M last week', dir: 'up' as const },
-  ];
-
-  const pilots = [
-    { tag: 'Sales + CS', name: 'Sales Copilot',     fromNum: 0,   toNum: 1.4, decimals: 1, prefix: '$',  suffix: 'M', metricUnit: ' saved',         sub: 'Account-brief agent rolled out to 84 AEs. 22% lift in reply rate across 317 auto-briefed accounts.', status: 'on track' },
-    { tag: 'R&D',        name: 'Developer Pilot',   fromNum: 0,   toNum: 38,  decimals: 0, prefix: '+',  suffix: '%', metricUnit: ' velocity',      sub: '18.2K → 25.1K LoC/week across a cohort of 48 engineers. Cycle time down 26%; PR-review agent live.', status: 'on track' },
-    { tag: 'Context',    name: 'Token Coverage',    fromNum: 0,   toNum: 1,   decimals: 0, prefix: '+',  suffix: '',  metricUnit: ' source',         sub: 'Hubspot connected Monday. Coverage now 85% across Slack, Notion, Gmail and Hubspot. Google Drive on deck.', status: 'at risk' },
-    { tag: 'People',     name: 'Change Management', fromNum: 0,   toNum: 120, decimals: 0, prefix: '',   suffix: '',  metricUnit: ' AI Champions',  sub: 'Up from 110 last week. Weekly office hours; 42-playbook internal library; NPS +12 among adopters.', status: 'on track' },
-  ];
-
-  const org = {
-    ceo: { name: 'Maya Chen', title: 'CEO', okr: 'Grow revenue per employee 2× this year.' },
-    functions: [
-      { name: 'Sales',            lead: 'Derek Holt',      people: 114, status: 'on track', tone: 'ok',   okr: 'Close $40M net new ARR' },
-      { name: 'Marketing',        lead: 'Priya Shah',      people: 16,  status: 'at risk',  tone: 'risk', okr: 'CAC payback < 9 mo' },
-      { name: 'Product',          lead: 'Jonas Lindqvist', people: 30,  status: 'on track', tone: 'ok',   okr: 'Launch Payments to $5M ARR' },
-      { name: 'Engineering',      lead: 'Leah Okafor',     people: 218, status: 'on track', tone: 'ok',   okr: 'Velocity +40%' },
-      { name: 'Customer Support', lead: 'Marco Velasco',   people: 151, status: 'at risk',  tone: 'risk', okr: 'CSAT 94 · AHT −20%' },
-      { name: 'Operations',       lead: 'Sana Devi',       people: 92,  status: 'on track', tone: 'ok',   okr: 'Save $3M in OpEx' },
-    ],
-  };
-
-  const Delta = ({ dir, children }: { dir: 'up' | 'down'; children: React.ReactNode }) => (
-    <span style={{ fontFamily: mono, fontSize: 11, letterSpacing: 0.1, color: dir === 'down' ? risk : accent, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-      <span style={{ fontSize: 9 }}>{dir === 'down' ? '▼' : '▲'}</span>
-      {children}
-    </span>
-  );
-
-  return (
-    <div style={{ background: bg, borderRadius: 16, padding: '36px 40px 40px', color: ink, fontFamily: sans }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 18, borderBottom: `1px solid ${ruleHi}` }}>
-        <div>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.3, color: accent, textTransform: 'uppercase' }}>weekly brief — wk 16 · 2026</div>
-          <div style={{ fontFamily: serif, fontSize: 32, lineHeight: 1.05, letterSpacing: -0.8, marginTop: 8, fontWeight: 400 }}>Helix Corp.</div>
-        </div>
-        <div style={{ textAlign: 'right', fontFamily: mono, fontSize: 10, color: dim, letterSpacing: 0.1, lineHeight: 1.6 }}>
-          <div>account lead · codos</div>
-          <div style={{ color: faint }}>dima@codos.ai</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: 28 }}>
-        {kpis.map((k, i) => (
-          <div key={k.label} style={{ padding: '2px 22px 6px', borderLeft: i === 0 ? 'none' : `1px solid ${rule}` }}>
-            <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.22, color: dim, textTransform: 'uppercase' }}>{k.label}</div>
-            <TweenedFigure from={k.fromNum} to={k.toNum} decimals={k.decimals} prefix={k.prefix} suffix={k.suffix} delay={120 + i * 90} serif={serif} ink={ink} />
-            <div style={{ marginTop: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <Delta dir={k.dir}>{k.delta}</Delta>
-              <span style={{ fontSize: 11, color: faint, fontStyle: 'italic' }}>vs {k.prev}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 44, marginBottom: 20, paddingBottom: 10, borderBottom: `1px solid ${ruleHi}` }}>
-        <span style={{ fontFamily: serif, fontSize: 20, fontStyle: 'italic', fontWeight: 400, letterSpacing: -0.3 }}>Pilots in flight</span>
-        <span style={{ fontFamily: mono, fontSize: 10, color: faint, letterSpacing: 0.2 }}>§01 · four active</span>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0 }}>
-        {pilots.map((p, i) => (
-          <div key={p.name} style={{ padding: '4px 22px 4px', borderLeft: i === 0 ? 'none' : `1px solid ${rule}` }}>
-            <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.22, color: dim, textTransform: 'uppercase' }}>{p.tag}</div>
-            <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 400, letterSpacing: -0.4, marginTop: 10 }}>{p.name}</div>
-            <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline' }}>
-              <PilotMetric
-                from={p.fromNum} to={p.toNum} decimals={p.decimals}
-                prefix={p.prefix} suffix={p.suffix}
-                delay={400 + i * 220}
-                serif={serif} accent={accent}
-              />
-              <span style={{ fontSize: 12, color: dim, marginLeft: 6, fontStyle: 'italic' }}>{p.metricUnit}</span>
-            </div>
-            <p style={{ fontSize: 13, lineHeight: 1.55, color: dim, marginTop: 10, marginBottom: 12 }}>{p.sub}</p>
-            <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.18, textTransform: 'uppercase', color: p.status === 'at risk' ? risk : dim, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: p.status === 'at risk' ? risk : ink, opacity: p.status === 'at risk' ? 1 : 0.5 }} />
-              {p.status}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 44, marginBottom: 24, paddingBottom: 10, borderBottom: `1px solid ${ruleHi}` }}>
-        <span style={{ fontFamily: serif, fontSize: 20, fontStyle: 'italic', fontWeight: 400, letterSpacing: -0.3 }}>Organization</span>
-        <span style={{ fontFamily: mono, fontSize: 10, color: faint, letterSpacing: 0.2 }}>§02 · 621 people across 6 functions</span>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
-        <div style={{ textAlign: 'center', maxWidth: 460, animation: 'arCeoIn 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both' }}>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.25, color: accent, textTransform: 'uppercase' }}>CEO</div>
-          <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 400, letterSpacing: -0.4, marginTop: 6 }}>{org.ceo.name}</div>
-          <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14, color: dim, marginTop: 8, letterSpacing: -0.1 }}>"{org.ceo.okr}"</div>
-        </div>
-      </div>
-
-      <svg viewBox="0 0 1200 44" width="100%" height="44" preserveAspectRatio="none" style={{ display: 'block', marginTop: 18, overflow: 'visible' }}>
-        <line x1="600" y1="0" x2="600" y2="16" stroke={ruleHi} strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'arTreeTrunk 400ms ease-out 500ms forwards' }} />
-        <line x1="600" y1="16" x2="100" y2="16" stroke={ruleHi} strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'arTreeTrunk 500ms ease-out 900ms forwards' }} />
-        <line x1="600" y1="16" x2="1100" y2="16" stroke={ruleHi} strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'arTreeTrunk 500ms ease-out 900ms forwards' }} />
-        {[100, 300, 500, 700, 900, 1100].map((x, i) => (
-          <line key={x} x1={x} y1="16" x2={x} y2="44" stroke={ruleHi} strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset="1" style={{ animation: `arTreeTrunk 300ms ease-out ${1400 + i * 80}ms forwards` }} />
-        ))}
-      </svg>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4 }}>
-        {org.functions.map((f, i) => (
-          <div key={f.name} style={{ padding: '14px 14px 4px', textAlign: 'center', animation: `arFuncIn 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both`, animationDelay: `${1500 + i * 90}ms` }}>
-            <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 400, letterSpacing: -0.2, color: ink }}>{f.name}</div>
-            <div style={{ fontSize: 11, color: faint, marginTop: 2 }}>{f.lead}</div>
-            <TweenedHeadcount target={f.people} delay={1600 + i * 90} serif={serif} ink={ink} />
-            <div style={{ fontFamily: mono, fontSize: 8, color: faint, letterSpacing: 0.25, textTransform: 'uppercase', marginTop: 2 }}>people</div>
-            <div style={{ fontSize: 11, color: dim, marginTop: 12, lineHeight: 1.35, minHeight: 28 }}>{f.okr}</div>
-            <div style={{ marginTop: 10, fontFamily: mono, fontSize: 9, letterSpacing: 0.25, textTransform: 'uppercase', color: f.tone === 'risk' ? risk : dim, display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-              <span style={{ width: 4, height: 4, borderRadius: '50%', background: f.tone === 'risk' ? risk : ink, opacity: f.tone === 'risk' ? 1 : 0.45 }} />
-              {f.status}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <style>{`
-        @keyframes arCeoIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes arTreeTrunk { to { stroke-dashoffset: 0; } }
-        @keyframes arFuncIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
-
-      <div style={{ marginTop: 56, paddingTop: 40, borderTop: `1px solid ${ruleHi}`, display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 560, background: '#ffffff', border: `1px solid ${ruleHi}`, borderRadius: 20, boxShadow: '0 30px 60px -24px rgba(26,26,26,0.18), 0 2px 4px rgba(26,26,26,0.04)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: `1px solid ${rule}`, background: 'rgba(26,26,26,0.02)' }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e2574c' }} />
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e2b24a' }} />
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#5fb878' }} />
-            <span style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 10, letterSpacing: 0.22, color: faint, textTransform: 'uppercase' }}>helix-caio · live</span>
-          </div>
-          <div style={{ padding: '36px 28px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: 160, height: 160 }}>
-              <VoiceOrb state="speaking" palette="terracotta" />
-            </div>
-            <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 0.3, color: accent, textTransform: 'uppercase', marginTop: 18 }}>§03 · always on</div>
-            <div style={{ fontFamily: serif, fontWeight: 400, fontSize: 38, lineHeight: 1.05, letterSpacing: -0.8, marginTop: 10, color: ink, textAlign: 'center' }}>
-              Talk to <span style={{ fontStyle: 'italic', color: accent }}>Helix CAIO</span>.
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderTop: `1px solid ${rule}`, background: 'rgba(26,26,26,0.02)' }}>
-            <span style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: faint, flex: 1 }}>Ask anything about Helix Corp…</span>
-            <span style={{ width: 32, height: 32, borderRadius: '50%', background: ink, color: bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>↑</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ───────────────── Scrollable mobile wrapper ─────────────────
-function ScrollableMock({ minWidth, children }: { minWidth: number; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [showHint, setShowHint] = useState(true);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const onScroll = () => {
-      if (el.scrollLeft > 8) setShowHint(false);
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <div
-        ref={ref}
-        style={{
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'thin',
-          borderRadius: 8,
-        }}
-      >
-        <div style={{ minWidth }}>{children}</div>
-      </div>
-      {showHint && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '50%', right: 0, transform: 'translateY(-50%)',
-            width: 56, height: '90%',
-            background: 'linear-gradient(to left, rgba(245,241,234,0.95), rgba(245,241,234,0))',
-            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-            paddingRight: 6, pointerEvents: 'none',
-            borderTopRightRadius: 8, borderBottomRightRadius: 8,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: '"Geist Mono", monospace', fontSize: 10,
-              color: ACCENT, letterSpacing: 0.18, textTransform: 'uppercase',
-              writingMode: 'vertical-rl' as CSSProperties['writingMode'],
-              textOrientation: 'mixed', opacity: 0.9,
-            }}
-          >
-            Scroll →
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ───────────────── ProductShowcase ─────────────────
-function ProductShowcase() {
-  const [tab, setTab] = useState<'interview' | 'context' | 'dashboard'>('interview');
-  const isMobile = useIsMobile();
-  const titles = {
-    interview: { prefix: 'A ', em: 'listening',     suffix: ' agent — not a form.' },
-    context:   { prefix: 'A living ', em: 'context graph', suffix: ' of your company.' },
-    dashboard: { prefix: '',  em: 'CAIO',            suffix: ' agent to run your transformation.' },
-  } as const;
-  const t = titles[tab];
-
-  const tabs = [
-    { id: 'interview' as const, label: 'Diagnostic interviews', kicker: '01' },
-    { id: 'context'   as const, label: 'Context graph',         kicker: '02' },
-    { id: 'dashboard' as const, label: 'Transformation',        kicker: '03' },
-  ];
-
-  return (
-    <section style={{ padding: isMobile ? '36px 0 64px' : '60px 0 100px' }}>
-      <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 32 }}>
-        <div style={S.kicker}>The product</div>
-        <h2 style={{ ...S.serif, fontSize: isMobile ? 30 : 48, lineHeight: 1.1, letterSpacing: isMobile ? -0.6 : -1, fontWeight: 400, margin: 0, maxWidth: 820, marginLeft: 'auto', marginRight: 'auto' }}>
-          {t.prefix}<em style={{ color: ACCENT }}>{t.em}</em>{t.suffix}
-        </h2>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: isMobile ? 'flex-start' : 'center',
-          gap: 4, marginBottom: isMobile ? 18 : 28,
-          overflowX: isMobile ? 'auto' : 'visible',
-          paddingBottom: isMobile ? 6 : 0,
-          marginLeft: isMobile ? -20 : 0, marginRight: isMobile ? -20 : 0,
-          paddingLeft: isMobile ? 20 : 0, paddingRight: isMobile ? 20 : 0,
-          scrollbarWidth: 'none',
-        }}
-      >
-        {tabs.map((tb) => {
-          const active = tab === tb.id;
-          return (
-            <button
-              key={tb.id}
-              onClick={() => setTab(tb.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: isMobile ? '8px 14px' : '10px 18px',
-                background: active ? '#1a1a1a' : 'transparent',
-                color: active ? '#fff' : 'rgba(0,0,0,0.55)',
-                border: active ? '1px solid #1a1a1a' : '1px solid rgba(0,0,0,0.12)',
-                borderRadius: 999, cursor: 'pointer',
-                fontFamily: 'Urbanist, sans-serif', fontSize: isMobile ? 12 : 13, fontWeight: 500,
-                letterSpacing: 0.1, transition: 'all 200ms ease',
-                whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              <span style={{ fontFamily: '"Geist Mono", monospace', fontSize: 10, color: active ? ACCENT : 'rgba(0,0,0,0.4)' }}>{tb.kicker}</span>
-              {tb.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{
-        background: '#faf5ec',
-        borderRadius: isMobile ? 16 : 24,
-        padding: isMobile ? 12 : 24,
-        boxShadow: isMobile ? '0 20px 40px -20px rgba(0,0,0,0.12)' : '0 40px 80px -20px rgba(0,0,0,0.15)',
-        border: '1px solid rgba(0,0,0,0.06)',
-        transition: 'background 400ms ease',
-        overflow: 'hidden',
-      }}>
-        {tab === 'interview' ? <InterviewMock />
-          : tab === 'context' ? (
-            isMobile ? (
-              <ScrollableMock minWidth={780}>
-                <ContextGraphMock />
-              </ScrollableMock>
-            ) : <ContextGraphMock />
-          )
-          : (
-            isMobile ? (
-              <ScrollableMock minWidth={780}>
-                <AccountReviewMock />
-              </ScrollableMock>
-            ) : <AccountReviewMock />
-          )}
-      </div>
-    </section>
-  );
-}
-
 // ───────────────── FeelingSection ─────────────────
 function FeelingSection() {
   const ref = useRef<HTMLElement | null>(null);
@@ -1241,6 +413,132 @@ function HowItWorksSection() {
             </div>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+// ───────────────── Shared section primitives (Figma 55:2 / 55:22) ─────────────────
+// Small chip used inside the product-mock panels. Tokens only.
+function Chip({ children, tone = 'plain' }: { children: React.ReactNode; tone?: 'plain' | 'highlight' }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      background: tone === 'highlight' ? 'var(--color-bg)' : 'var(--color-panel-chip)',
+      color: 'var(--color-text)',
+      fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 1.2,
+      padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)',
+      whiteSpace: 'nowrap',
+    }}>
+      {children}
+    </span>
+  );
+}
+
+// "_stepN" + mixed verb/method headline (verb = headline face, method = mono),
+// two-column on desktop. Shared by the diagnostic and graph sections.
+function StepHeader({ step, verb, method, tagline, rightSub }: {
+  step: string; verb: string; method: string; tagline: string; rightSub?: string;
+}) {
+  const isMobile = useIsMobile();
+  const heading: CSSProperties = {
+    fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)',
+    fontWeight: 'var(--font-weight-regular)' as unknown as number,
+    letterSpacing: '-0.02em', margin: 0,
+  };
+  const sub: CSSProperties = {
+    margin: 'var(--space-3) 0 0', fontFamily: 'var(--font-body)',
+    fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)',
+    color: 'var(--color-text)', maxWidth: '34ch',
+  };
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.85fr) minmax(0, 2fr)',
+      gap: isMobile ? 'var(--space-4)' : 'var(--space-8)', alignItems: 'start',
+    }}>
+      <div>
+        <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
+        <p style={sub}>{tagline}</p>
+      </div>
+      <div>
+        <h2 style={heading}>
+          <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
+          <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
+        </h2>
+        {rightSub ? <p style={sub}>{rightSub}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+const Dot: React.FC<{ color: string }> = ({ color }) => (
+  <span style={{ width: 10, height: 10, borderRadius: 'var(--radius-full)', background: color, display: 'inline-block', flexShrink: 0 }} />
+);
+
+// ───────────────── DiagnosticSection (Figma 55:2) ─────────────────
+// Flat "step one" diagnostic: header + a live interview mock (orb, transcript,
+// status chips). No switcher / tabs / state. Tokens only.
+function DiagnosticSection() {
+  const isMobile = useIsMobile();
+  const d = COPY.diagnostic;
+  const meta: CSSProperties = {
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+    lineHeight: 1.4, color: 'var(--color-text)',
+  };
+  return (
+    <section data-section="diagnostic" style={{ padding: isMobile ? 'var(--space-10) 0' : 'var(--space-12) 0' }}>
+      <StepHeader step={d.step} verb={d.verb} method={d.method} tagline={d.tagline} />
+
+      {/* Live interview mock */}
+      <div style={{
+        marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)',
+        background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
+        padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
+        display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
+        minHeight: isMobile ? 'auto' : '30rem',
+      }}>
+        {/* header row: window dots · centred label+session · status */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <Dot color="var(--color-border-strong)" /><Dot color="var(--color-border-strong)" /><Dot color="var(--color-border-strong)" />
+          </div>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.1 }}>{d.cardLabel}</div>
+            <div style={{ ...meta, display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {d.session.map((s) => <span key={s}>{s}</span>)}
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <span style={{ ...meta, display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)', background: 'var(--color-panel-chip)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap' }}>
+              <Dot color="var(--color-status-live)" />{d.status}
+            </span>
+          </div>
+        </div>
+
+        {/* orb + agent tag */}
+        <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-3)' }}>
+          <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ width: 'clamp(180px, 32vw, 360px)', height: 'auto', display: 'block', pointerEvents: 'none', userSelect: 'none' }} />
+          <span style={{ ...meta, background: 'var(--color-panel-chip)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)' }}>{d.agentTag}</span>
+        </div>
+
+        {/* transcript quote */}
+        <p style={{
+          margin: '0 auto', textAlign: 'center', fontFamily: 'var(--font-headline)',
+          fontSize: 'var(--text-h4)', lineHeight: 'var(--leading-h4)', maxWidth: '46ch',
+        }}>
+          {d.quote}
+        </p>
+
+        {/* footer: status text (left) · controls (right) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+          <div style={{ ...meta, display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+            {d.footLeft.map((f) => <span key={f}>{f}</span>)}
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            {d.footRight.map((f) => <Chip key={f}>{f}</Chip>)}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1468,7 +766,8 @@ export default function EditorialLanding({ onCtaClick }: Props) {
           </div>
         </section>
 
-        <ProductShowcase />
+        {/* DIAGNOSTIC (Figma 55:2) — replaces the old switcher */}
+        <DiagnosticSection />
 
         {/* WHO */}
         <section style={{ padding: isMobile ? '64px 0' : '100px 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
