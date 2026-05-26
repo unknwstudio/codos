@@ -139,3 +139,27 @@ is byte-identical across all three frames (one shared asset).
   `--space-*`, `--radius-*`, fonts) — no raw hex/px.
 - Verified visually by rendering the section in isolation (clean match to 55:2).
   Added a stable `data-section="diagnostic"` hook on the section.
+
+---
+
+## Task 4 — context graph redesign
+
+- Built `ContextGraphSection` per Figma 55:22: shared `StepHeader` (`_stepTwo` +
+  tagline left, "setting contexts.Graph" + "Every signal, routed, deduped, written
+  to record." right), then a top-down data-flow graph:
+  `.sources` → `.raw-data` → 4 `observer` cards (.people/.product/.operations/
+  .market) → the yellow `company-merge-judge` highlight node → 3 `vault` cards
+  (.company/.engagement/.working-memory), joined by vertical `GraphLink` connectors.
+- `GraphCard` (kicker + title + white chips) and the yellow node use the new
+  `--color-highlight` / `--color-panel` tokens; chips reuse the shared `Chip`. The
+  graph is right-biased (76% width, margin-left:auto on desktop) and the multi-card
+  tiers use `auto-fit minmax` grids so they reflow 4→2→1 with no breakpoint code.
+- **"particles 1" on the LEFT**: a standalone static `<img>` positioned left and
+  partially off-canvas, behind the graph (z-index 0). **No conflict with the hero
+  particle animation** — that effect targets the hero `<img>` *by ref*, never by a
+  selector, so this second instance is independent. On mobile it drops to opacity
+  0.22 as a faint backdrop so the cards stay legible.
+- Faithful adaptation: the Figma frame draws the edges as many absolute SVG vectors
+  (node-positioned, non-responsive). Replaced with semantic vertical connectors +
+  flow order, which preserves the "routed/deduped → record" reading and stays fluid.
+- Verified in isolation at 1440 and 500px (clean match; cards reflow correctly).

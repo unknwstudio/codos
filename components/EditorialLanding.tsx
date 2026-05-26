@@ -544,6 +544,86 @@ function DiagnosticSection() {
   );
 }
 
+// ───────────────── ContextGraphSection (Figma 55:22) ─────────────────
+// A node in the context-graph flow: optional kicker, title, white chips.
+function GraphCard({ kicker, label, chips, highlight = false }: {
+  kicker?: string; label: string; chips: string[]; highlight?: boolean;
+}) {
+  const ink = highlight ? 'var(--color-highlight-contrast)' : 'var(--color-text)';
+  return (
+    <div style={{
+      background: highlight ? 'var(--color-highlight)' : 'var(--color-panel)',
+      borderRadius: 'var(--radius-md)', padding: 'var(--space-4)',
+      display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
+    }}>
+      {kicker ? (
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.14em', textTransform: 'uppercase', color: ink, opacity: 0.7 }}>{kicker}</div>
+      ) : null}
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-h3)', lineHeight: 1.1, color: ink }}>{label}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+        {chips.map((c) => <Chip key={c}>{c}</Chip>)}
+      </div>
+    </div>
+  );
+}
+
+// Vertical connector between graph tiers.
+const GraphLink: React.FC = () => (
+  <div aria-hidden="true" style={{ width: 'var(--border-thin)', height: 'var(--space-6)', background: 'var(--color-border-strong)', margin: '0 auto' }} />
+);
+
+function ContextGraphSection() {
+  const isMobile = useIsMobile();
+  const g = COPY.graph;
+  // NOTE: this is a standalone static <img>. The hero's scroll animation targets
+  // its own element by ref (not a selector), so this instance never conflicts.
+  return (
+    <section data-section="graph" style={{ position: 'relative', overflow: 'hidden', padding: isMobile ? 'var(--space-10) 0' : 'var(--space-12) 0' }}>
+      <StepHeader step={g.step} verb={g.verb} method={g.method} tagline={COPY.diagnostic.tagline} rightSub={g.tagline} />
+
+      <div style={{ position: 'relative', marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>
+        {/* particle 1 — LEFT side, decorative, behind the graph */}
+        <img
+          src={PARTICLES_SRC}
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute', left: isMobile ? '-28%' : '-9%', top: '28%',
+            width: isMobile ? '92%' : 'clamp(260px, 28vw, 440px)', height: 'auto',
+            opacity: isMobile ? 0.22 : 0.95, zIndex: 0,
+            pointerEvents: 'none', userSelect: 'none',
+          }}
+        />
+
+        {/* graph flow (right-biased, above the particle) */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'min(100%, 76%)',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <GraphCard label={g.sources.label} chips={g.sources.chips} />
+          <GraphLink />
+          <div style={{ width: isMobile ? '100%' : '58%', margin: '0 auto' }}>
+            <GraphCard label={g.rawData.label} chips={g.rawData.chips} />
+          </div>
+          <GraphLink />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-3)' }}>
+            {g.observers.map((o) => <GraphCard key={o.label} kicker={o.kicker} label={o.label} chips={o.chips} />)}
+          </div>
+          <GraphLink />
+          <div style={{ width: isMobile ? '100%' : '62%', margin: '0 auto' }}>
+            <GraphCard label={g.judge.label} chips={g.judge.chips} highlight />
+          </div>
+          <GraphLink />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-3)' }}>
+            {g.vaults.map((v) => <GraphCard key={v.label} kicker={v.kicker} label={v.label} chips={v.chips} />)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ───────────────── Hero (Figma 33:78) ─────────────────
 // Full-bleed brand hero. Split "install / evolution" headline (GT Alpina
 // Typewriter), particle cloud centerpiece, lede + dual CTAs, credentials.
@@ -768,6 +848,9 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
         {/* DIAGNOSTIC (Figma 55:2) — replaces the old switcher */}
         <DiagnosticSection />
+
+        {/* CONTEXT GRAPH (Figma 55:22) */}
+        <ContextGraphSection />
 
         {/* WHO */}
         <section style={{ padding: isMobile ? '64px 0' : '100px 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
