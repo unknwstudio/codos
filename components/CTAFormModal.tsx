@@ -6,18 +6,20 @@ type CTAFormModalProps = {
   onClose: () => void;
 };
 
-const ACCENT = '#F26B1F';
-const CREAM = '#f5f1ea';
-const PAPER = '#faf5ec';
-const INK = '#1a1a1a';
-const DIM = '#3a3a3a';
-const FAINT = 'rgba(26,26,26,0.55)';
-const RULE = 'rgba(26,26,26,0.12)';
-const RULE_HI = 'rgba(26,26,26,0.22)';
+// Colors/fonts consume design tokens (tokens.css). Values are pixel-exact to
+// the previous literals — only the source of the value changed.
+const ACCENT = 'var(--color-accent)';
+const CREAM = 'var(--color-cream)';
+const PAPER = 'var(--color-paper)';
+const INK = 'var(--color-ink)';
+const DIM = 'var(--color-ink-soft)';
+const FAINT = 'var(--color-faint)';
+const RULE = 'var(--color-border)';
+const RULE_HI = 'var(--color-border-strong)';
 
-const SERIF = '"Fraunces", "Instrument Serif", Georgia, serif';
-const SANS = "'Urbanist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
-const MONO = '"Geist Mono", ui-monospace, monospace';
+const SERIF = 'var(--font-serif)';
+const SANS = 'var(--font-sans)';
+const MONO = 'var(--font-mono)';
 
 const labelStyle: CSSProperties = {
   display: 'block',
@@ -32,7 +34,7 @@ const labelStyle: CSSProperties = {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  background: '#fff',
+  background: 'var(--color-white)',
   color: INK,
   fontFamily: SANS,
   fontSize: 15,
@@ -201,7 +203,7 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
 
   const fieldFocusStyle = (key: string): CSSProperties =>
     focusKey === key
-      ? { borderColor: ACCENT, boxShadow: `0 0 0 3px ${ACCENT}1f` }
+      ? { borderColor: ACCENT, boxShadow: '0 0 0 3px var(--color-brand-ring)' }
       : {};
 
   const renderInput = (
@@ -254,7 +256,7 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(26, 26, 26, 0.55)',
+          background: 'var(--color-ink-55)',
           backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
           animation: 'ctaFadeIn 200ms ease',
@@ -325,7 +327,7 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
               style={{
                 width: isMobile ? 48 : 56, height: isMobile ? 48 : 56, borderRadius: 14,
                 objectFit: 'cover', objectPosition: 'center top',
-                background: '#f5ede0',
+                background: 'var(--color-paper-warm)',
                 border: `1px solid ${RULE_HI}`,
                 flexShrink: 0,
               }}
@@ -399,9 +401,9 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
           {errorMessage && (
             <div
               style={{
-                background: 'rgba(181, 87, 43, 0.08)',
-                border: '1px solid rgba(181, 87, 43, 0.35)',
-                color: '#7a3a1c',
+                background: 'var(--color-danger-bg)',
+                border: '1px solid var(--color-danger-border)',
+                color: 'var(--color-danger-ink)',
                 padding: '12px 14px',
                 borderRadius: 12,
                 fontSize: 13,
@@ -414,9 +416,9 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
           {isSuccess && (
             <div
               style={{
-                background: 'rgba(63, 122, 94, 0.08)',
-                border: '1px solid rgba(63, 122, 94, 0.35)',
-                color: '#2c5a44',
+                background: 'var(--color-success-bg)',
+                border: '1px solid var(--color-success-border)',
+                color: 'var(--color-success-ink)',
                 padding: '12px 14px',
                 borderRadius: 12,
                 fontSize: 14,
@@ -468,7 +470,7 @@ const CTAFormModal: React.FC<CTAFormModalProps> = ({ isOpen, onClose }) => {
                 transition: 'background 150ms ease, border-color 150ms ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(26, 26, 26, 0.06)';
+                e.currentTarget.style.background = 'var(--color-ink-06)';
                 e.currentTarget.style.borderColor = INK;
               }}
               onMouseLeave={(e) => {

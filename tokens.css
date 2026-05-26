@@ -130,9 +130,13 @@
   --color-brand: #F26B1F;
   --color-brand-ring: #F26B1F1f; /* brand @ ~12% alpha (focus ring) */
 
-  /* Editorial state inks */
+  /* Editorial state inks + soft fills (notices) */
   --color-danger-ink: #7a3a1c;
+  --color-danger-bg: rgba(181, 87, 43, 0.08);
+  --color-danger-border: rgba(181, 87, 43, 0.35);
   --color-success-ink: #2c5a44;
+  --color-success-bg: rgba(63, 122, 94, 0.08);
+  --color-success-border: rgba(63, 122, 94, 0.35);
 
   /* ---- Semantic tokens (editorial / default theme) ---- */
   --color-bg: var(--color-cream);
