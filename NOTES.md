@@ -246,3 +246,35 @@ infographic with its connector paths):
   responsive); the authored curves match the frame's converge/fan pattern and align
   perfectly because they share the node coordinate space. Verified diagnostic + graph
   in isolation at 1440 and 500px.
+
+---
+
+## Revision round 2 — full-bleed + redesign all sections
+
+- **Removed the container.** Dropped the `innerStyle`/`S.inner` max-width wrapper;
+  every section is now edge-to-edge like the hero, padded by the fluid
+  `--page-gutter` and `--section-y` rhythm (new `SECTION` style + `StepSection` now
+  carries its own gutter). Only body paragraphs keep a readable `ch`/`rem` measure
+  (same as the hero lede).
+- **Redesigned every remaining section in the new language** (GT Alpina headlines +
+  DM Mono body + `--color-panel` cards + chips + orange accent), via two new shared
+  primitives: `SectionHead` (mono accent kicker + GT Alpina headline + optional sub)
+  and `Panel` (token card surface):
+  - **Who it's for** → 3 panel cards, range as a `Chip`, GT Alpina name, mono body.
+  - **Build it yourself** → a single panel comparison (Metric / Build-it-yourself
+    struck-through / With-Codos w/ accent dot); stacks to 2-col on mobile.
+  - **How it works** → panel cards with accent `01/02/03`, time `Chip`, GT Alpina
+    title, mono body (kept the intersection-observer fly-in).
+  - **Team** → founder panel cards (photo, GT Alpina name, mono accent role, bio).
+  - **FAQ** → accordion with GT Alpina questions + accent `+`, mono answers.
+  - **Closing CTA** → an inverted dark panel (`className="theme-dark"`, so it uses the
+    semantic dark tokens) with the particle cloud as a backdrop, a mixed
+    "Ready to run your business `like code?`" headline, and hero-style buttons.
+  - **Footer** → logo + mono links, full-bleed.
+- Verified Who/Build/How/Team/FAQ/Closing in isolation at 1400 and 500px (the long
+  page's lower sections don't paint in full-page headless captures — the 4 particle
+  PNGs choke the virtual-time paint — so I rendered the lower half at the top to
+  confirm; DOM/scroll metrics confirmed the full 8071px page is intact).
+- Dead code left behind (harmless, no `noUnusedLocals`): `CodosLogo`, `LogoPill`,
+  the `S` style object's legacy keys, `ACCENT`, and a few now-unused `COPY` fields —
+  candidates for a later prune.

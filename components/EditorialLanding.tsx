@@ -298,56 +298,29 @@ function HowItWorksSection() {
   }, []);
 
   return (
-    <section id="how" ref={ref} style={{ padding: 'var(--section-y) 0', overflow: 'hidden' }}>
-      <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 64 }}>
-        <div style={S.kicker}>{COPY.howKicker}</div>
-        <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: '0 auto', maxWidth: 720 }}>{COPY.howTitle}</h2>
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-          gap: isMobile ? 32 : 0,
-          position: 'relative',
-        }}
-      >
-        {!isMobile && (
-          <div
-            style={{
-              position: 'absolute', top: 30, left: '8%', right: '8%',
-              height: 1, background: 'rgba(0,0,0,0.15)',
-              transformOrigin: 'left center',
-              transform: visible ? 'scaleX(1)' : 'scaleX(0)',
-              transition: 'transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms',
-            }}
-          />
-        )}
+    <section id="how" ref={ref} style={{ ...SECTION, overflow: 'hidden' }}>
+      <SectionHead kicker={COPY.howKicker} title={COPY.howTitle} titleMaxW="22ch" />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
         {COPY.howSteps.map((s, i) => {
-          const delay = i * 350;
+          const delay = i * 280;
           return (
             <div
               key={s.name}
               style={{
-                textAlign: 'center', padding: '0 20px',
                 opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(40px)',
-                filter: visible ? 'blur(0)' : 'blur(8px)',
-                transition: `opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms, transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms, filter 700ms ease ${delay}ms`,
-                willChange: 'transform, opacity, filter',
+                transform: visible ? 'translateY(0)' : 'translateY(32px)',
+                transition: `opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms, transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms`,
+                willChange: 'transform, opacity',
               }}
             >
-              <div style={{
-                width: 60, height: 60, borderRadius: '50%',
-                background: ACCENT, color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 20px', ...S.serif,
-                fontSize: 24, fontWeight: 500, position: 'relative', zIndex: 2,
-                transform: visible ? 'scale(1)' : 'scale(0.5)',
-                transition: `transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay + 100}ms`,
-              }}>{i + 1}</div>
-              <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 10, color: ACCENT, letterSpacing: 0.15, textTransform: 'uppercase', marginBottom: 8 }}>{s.time}</div>
-              <div style={{ ...S.serif, fontSize: 26, fontWeight: 400, letterSpacing: -0.3, marginBottom: 10 }}>{s.name}</div>
-              <div style={{ ...S.body, fontSize: 14, maxWidth: 280, margin: '0 auto' }}>{s.body}</div>
+              <Panel style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h2)', lineHeight: 1, color: 'var(--color-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
+                  <Chip>{s.time}</Chip>
+                </div>
+                <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{s.name}</div>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{s.body}</div>
+              </Panel>
             </div>
           );
         })}
@@ -373,6 +346,37 @@ function Chip({ children, tone = 'plain' }: { children: React.ReactNode; tone?: 
   );
 }
 
+// Full-bleed section padding (fluid gutter + rhythm). The site is edge-to-edge —
+// no max-width container; only body text keeps a readable measure.
+const SECTION: CSSProperties = { padding: 'var(--section-y) var(--page-gutter)' };
+const REG = 'var(--font-weight-regular)' as unknown as number;
+
+// Shared section header — mono accent kicker + GT Alpina headline (+ optional sub).
+function SectionHead({ kicker, title, sub, center = false, titleMaxW }: {
+  kicker: string; title: React.ReactNode; sub?: string; center?: boolean; titleMaxW?: string;
+}) {
+  return (
+    <div style={{ textAlign: center ? 'center' : 'left', marginBottom: 'var(--space-8)' }}>
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-accent)', marginBottom: 'var(--space-4)' }}>{kicker}</div>
+      <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: center ? '0 auto' : 0, maxWidth: titleMaxW }}>{title}</h2>
+      {sub ? <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)', color: 'var(--color-muted)', margin: center ? 'var(--space-4) auto 0' : 'var(--space-4) 0 0', maxWidth: '52ch' }}>{sub}</p> : null}
+    </div>
+  );
+}
+
+// A standard panel/card surface.
+function Panel({ children, highlight = false, style }: { children: React.ReactNode; highlight?: boolean; style?: CSSProperties }) {
+  return (
+    <div style={{
+      background: highlight ? 'var(--color-highlight)' : 'var(--color-panel)',
+      color: highlight ? 'var(--color-highlight-contrast)' : 'var(--color-text)',
+      borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)', ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
 // "_stepN" (left col) + mixed verb/method headline (right col). The section's
 // visual (`children`) lives in the RIGHT column, so it aligns under the headline
 // ("conduct" / "setting"), not under the step. `bgVisual` is an absolute layer
@@ -393,7 +397,7 @@ function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVis
     color: 'var(--color-text)', maxWidth: '34ch',
   };
   return (
-    <section data-section={dataSection} style={{ position: 'relative', overflow: 'hidden', padding: 'var(--section-y) 0' }}>
+    <section data-section={dataSection} style={{ position: 'relative', overflow: 'hidden', ...SECTION }}>
       {bgVisual}
       <div style={{
         display: 'grid',
@@ -771,233 +775,124 @@ export default function EditorialLanding({ onCtaClick }: Props) {
     }
   };
 
-  const innerStyle: CSSProperties = S.inner; // fluid gutter handles every width
-
   return (
     <div style={S.wrap}>
       {/* HERO (Figma 33:78) — full-bleed */}
       <Hero onCta={handleCta} />
 
-      <div style={innerStyle}>
-        {/* DIAGNOSTIC (Figma 55:2) — replaces the old switcher */}
-        <DiagnosticSection />
+      {/* DIAGNOSTIC (Figma 55:2) */}
+      <DiagnosticSection />
 
-        {/* CONTEXT GRAPH (Figma 55:22) */}
-        <ContextGraphSection />
+      {/* CONTEXT GRAPH (Figma 55:22) */}
+      <ContextGraphSection />
 
-        {/* WHO */}
-        <section style={{ padding: 'var(--section-y) 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-          <div style={S.kicker}>{COPY.whoKicker}</div>
-          <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: isMobile ? '0 0 32px' : '0 0 48px', maxWidth: 820 }}>
-            {COPY.whoTitle}
-          </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: 0,
-            borderTop: '1px solid rgba(0,0,0,0.1)',
-          }}>
-            {COPY.who.map((w, i) => (
-              <div
-                key={w.name}
-                style={{
-                  padding: isMobile ? '24px 0' : '36px 28px 36px 0',
-                  borderRight: !isMobile && i < 2 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                  borderBottom: isMobile && i < 2 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                  paddingLeft: !isMobile && i > 0 ? 28 : 0,
-                }}
-              >
-                <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 10, color: ACCENT, letterSpacing: 0.15, textTransform: 'uppercase', marginBottom: 12 }}>{w.range}</div>
-                <div style={{ ...S.serif, fontSize: isMobile ? 24 : 28, fontWeight: 400, letterSpacing: -0.4, marginBottom: 10 }}>{w.name}</div>
-                <div style={{ ...S.body, fontSize: isMobile ? 14 : 15 }}>{w.body}</div>
-              </div>
-            ))}
+      {/* WHO IT'S FOR */}
+      <section style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
+        <SectionHead kicker={COPY.whoKicker} title={COPY.whoTitle} titleMaxW="24ch" />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
+          {COPY.who.map((w) => (
+            <Panel key={w.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', height: '100%', boxSizing: 'border-box' }}>
+              <Chip>{w.range}</Chip>
+              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{w.name}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{w.body}</div>
+            </Panel>
+          ))}
+        </div>
+      </section>
+
+      {/* BUILD VS BUY */}
+      <section style={SECTION}>
+        <SectionHead kicker="analysis" title={COPY.buildVsBuyTitle} sub={COPY.buildVsBuySub} titleMaxW="18ch" />
+        <Panel style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.4fr 1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-4) var(--space-6)', borderBottom: 'var(--border-thin) solid var(--color-border-strong)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+            {!isMobile && <div>Metric</div>}
+            <div>Build it yourself</div>
+            <div style={{ color: 'var(--color-accent)' }}>With Codos</div>
           </div>
-        </section>
-
-        {/* BUILD VS BUY */}
-        <section style={{ padding: 'var(--section-y) 0' }}>
-          <div style={S.kicker}>Analysis</div>
-          <h2 style={{ ...S.serif, fontSize: isMobile ? 30 : 48, lineHeight: 1.1, letterSpacing: isMobile ? -0.6 : -1, fontWeight: 400, margin: '0 0 12px', maxWidth: 720 }}>
-            {COPY.buildVsBuyTitle}
-          </h2>
-          <p style={{ ...S.body, marginBottom: isMobile ? 24 : 40 }}>{COPY.buildVsBuySub}</p>
-          {isMobile ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {COPY.compareRows.map((r) => (
-                <div
-                  key={r.metric}
-                  style={{
-                    background: '#fff',
-                    borderRadius: 18,
-                    padding: '20px 20px 18px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                  }}
-                >
-                  <div
-                    style={{
-                      ...S.serif,
-                      fontSize: 22, lineHeight: 1.15, letterSpacing: -0.4,
-                      fontWeight: 400, marginBottom: 16,
-                    }}
-                  >
-                    {r.metric}
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex', flexDirection: 'column', gap: 10,
-                      paddingTop: 14, borderTop: '1px solid rgba(0,0,0,0.08)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                      <span
-                        style={{
-                          fontFamily: '"Geist Mono", monospace', fontSize: 9,
-                          color: 'rgba(0,0,0,0.45)', letterSpacing: 0.2,
-                          textTransform: 'uppercase', minWidth: 44, flexShrink: 0,
-                        }}
-                      >
-                        DIY
-                      </span>
-                      <span style={{ fontSize: 15, color: '#7a7a7a', textDecoration: 'line-through', textDecorationColor: 'rgba(0,0,0,0.18)' }}>
-                        {r.diy}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                      <span
-                        style={{
-                          fontFamily: '"Geist Mono", monospace', fontSize: 9,
-                          color: ACCENT, letterSpacing: 0.2,
-                          textTransform: 'uppercase', minWidth: 44, flexShrink: 0,
-                        }}
-                      >
-                        Codos
-                      </span>
-                      <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
-                        {r.codos}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ background: '#fff', borderRadius: 20, padding: '12px 32px', border: '1px solid rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', padding: '18px 0', borderBottom: '1px solid rgba(0,0,0,0.08)', fontFamily: '"Geist Mono", monospace', fontSize: 11, letterSpacing: 0.15, textTransform: 'uppercase', color: '#888' }}>
-                <div>Metric</div>
-                <div>Build it yourself</div>
-                <div style={{ color: ACCENT }}>With Codos</div>
+          {COPY.compareRows.map((r) => (
+            <div key={r.metric} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.4fr 1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-5) var(--space-6)', borderBottom: 'var(--border-thin) solid var(--color-border)', alignItems: 'center' }}>
+              <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.15, marginBottom: isMobile ? 'var(--space-2)' : 0 }}>{r.metric}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-muted)', textDecoration: 'line-through', textDecorationColor: 'var(--color-border-strong)' }}>{r.diy}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <Dot color="var(--color-accent)" />{r.codos}
               </div>
-              {COPY.compareRows.map((r) => (
-                <div key={r.metric} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', padding: '22px 0', borderBottom: '1px solid rgba(0,0,0,0.05)', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{r.metric}</div>
-                  <div style={{ ...S.body, fontSize: 15, color: '#8a8a8a' }}>{r.diy}</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>
-                    <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: ACCENT, marginRight: 10, verticalAlign: 'middle' }} />
-                    {r.codos}
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
-        </section>
+          ))}
+        </Panel>
+      </section>
 
-        {/* HOW */}
-        <HowItWorksSection />
+      {/* HOW IT WORKS */}
+      <HowItWorksSection />
 
-        {/* TEAM */}
-        <section id="team" style={{ padding: 'var(--section-y) 0', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
-            <div style={S.kicker}>{COPY.teamKicker}</div>
-            <h2 style={{ ...S.serif, fontSize: isMobile ? 32 : 56, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: '0 auto', maxWidth: 720 }}>
-              {COPY.teamTitle}
+      {/* TEAM */}
+      <section id="team" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
+        <SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} center titleMaxW="20ch" />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 'var(--space-4)', maxWidth: '64rem', margin: '0 auto' }}>
+          {COPY.team.map((p) => {
+            const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
+            return (
+              <Panel key={p.name} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
+                <div style={{ aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-panel-chip)' }}>
+                  <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{p.name}</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-accent)', marginTop: 'var(--space-2)' }}>{p.role}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                  {p.bio.map((b, i) => <div key={i} style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-muted)' }}>{b}</div>)}
+                </div>
+              </Panel>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" style={SECTION}>
+        <SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} center titleMaxW="18ch" />
+        <div style={{ maxWidth: '52rem', margin: '0 auto' }}>
+          {COPY.faq.map((f, i) => (
+            <details key={f.q} open={i === 0} style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
+              <summary style={{ listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)', cursor: 'pointer', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.2 }}>
+                <span style={{ flex: 1 }}>{f.q}</span>
+                <span style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)' }}>+</span>
+              </summary>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)', marginTop: 'var(--space-3)', maxWidth: '48ch' }}>{f.a}</div>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* CLOSING CTA */}
+      <section id="demo" style={SECTION}>
+        <div className="theme-dark" style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-bg)', color: 'var(--color-text)', borderRadius: 'var(--radius-xl)', padding: isMobile ? 'var(--space-8) var(--space-5)' : 'var(--space-12) var(--space-10)' }}>
+          <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', right: '-6%', top: '50%', transform: 'translateY(-50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '36rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: 0 }}>
+              Ready to run your business <span style={{ fontFamily: 'var(--font-body)' }}>like&nbsp;code?</span>
             </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? 18 : 28 }}>
-            {COPY.team.map((p) => {
-              const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
-              return (
-                <div key={p.name} style={{ background: '#fff', borderRadius: 20, padding: isMobile ? 24 : 32, border: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div style={{ aspectRatio: '1/1', background: '#f5ede0', borderRadius: 12, marginBottom: 20, overflow: 'hidden', position: 'relative' }}>
-                    <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
-                  </div>
-                  <div style={{ ...S.serif, fontSize: isMobile ? 24 : 28, fontWeight: 400, letterSpacing: -0.3 }}>{p.name}</div>
-                  <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 10, color: ACCENT, letterSpacing: 0.15, textTransform: 'uppercase', marginTop: 4, marginBottom: 14 }}>{p.role}</div>
-                  {p.bio.map((b, i) => (
-                    <div key={i} style={{ ...S.body, fontSize: 14, marginBottom: 4 }}>{b}</div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section id="faq" style={{ padding: 'var(--section-y) 0' }}>
-          <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 40 }}>
-            <div style={S.kicker}>{COPY.faqKicker}</div>
-            <h2 style={{ ...S.serif, fontSize: isMobile ? 28 : 48, lineHeight: 1.1, letterSpacing: isMobile ? -0.6 : -1, fontWeight: 400, margin: 0 }}>{COPY.faqTitle}</h2>
-          </div>
-          <div style={{ maxWidth: 820, margin: '0 auto' }}>
-            {COPY.faq.map((f, i) => (
-              <details key={f.q} open={i === 0} style={{ padding: isMobile ? '18px 12px' : '22px 24px', borderBottom: '1px solid rgba(0,0,0,0.08)', cursor: 'pointer' }}>
-                <summary style={{ ...S.serif, fontSize: isMobile ? 18 : 22, fontWeight: 400, letterSpacing: -0.2, listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  <span style={{ flex: 1 }}>{f.q}</span>
-                  <span style={{ fontFamily: '"Geist Mono", monospace', fontSize: 14, color: ACCENT }}>+</span>
-                </summary>
-                <div style={{ ...S.body, fontSize: isMobile ? 14 : 15, marginTop: 10, maxWidth: 680 }}>{f.a}</div>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        {/* CLOSING */}
-        <section id="demo" style={{ padding: 'var(--section-y) 0' }}>
-          <div style={{
-            background: '#1a1a1a', color: '#f5f1ea',
-            borderRadius: isMobile ? 22 : 32,
-            padding: isMobile ? '44px 24px' : '80px 60px',
-            position: 'relative', overflow: 'hidden',
-          }}>
-            <div style={{ position: 'absolute', top: -120, right: -80, width: isMobile ? 260 : 400, height: isMobile ? 260 : 400, borderRadius: '50%', background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)`, opacity: 0.35 }} />
-            <div style={{ position: 'relative', maxWidth: 680 }}>
-              <h2 style={{ ...S.serif, fontSize: isMobile ? 34 : 64, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.5, fontWeight: 400, margin: '0 0 16px' }}>
-                Ready to run your business <em style={{ color: ACCENT }}>like code?</em>
-              </h2>
-              <p style={{ fontSize: isMobile ? 15 : 18, lineHeight: 1.5, opacity: 0.7, marginBottom: isMobile ? 24 : 32 }}>{COPY.closingSub}</p>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                <a href="#" onClick={handleCta} style={{ ...S.btn, background: ACCENT, color: '#fff' }}>Book a 30-min call →</a>
-                <a href={`mailto:${COPY.founderEmail}`} style={{ color: '#f5f1ea', textDecoration: 'underline', fontSize: 14, opacity: 0.8 }}>
-                  ✉ {COPY.founderEmail}
-                </a>
-              </div>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)', color: 'var(--color-muted)', margin: 'var(--space-5) 0 0' }}>{COPY.closingSub}</p>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)', flexWrap: 'wrap' }}>
+              <a href="#" onClick={handleCta} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-text)', color: 'var(--color-bg)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', textDecoration: 'none' }}>{COPY.ctaPrimary}</a>
+              <a href={`mailto:${COPY.founderEmail}`} style={{ display: 'inline-flex', alignItems: 'center', background: 'transparent', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', border: 'var(--border-thin) solid var(--color-border-strong)', textDecoration: 'none' }}>{COPY.heroCtaSecondary}</a>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <footer
-          style={{
-            padding: isMobile ? '0 0 36px' : '0 0 64px',
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            justifyContent: 'space-between',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            gap: isMobile ? 14 : 0,
-            fontSize: 13, color: '#6a6a6a',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <CodosLogo size={22} color="#1a1a1a" />
-            <span>© {new Date().getFullYear()} Codos, Inc.</span>
-          </div>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <a href="#" style={{ color: '#6a6a6a', textDecoration: 'none' }}>Privacy</a>
-            <a href="#" style={{ color: '#6a6a6a', textDecoration: 'none' }}>Terms</a>
-            <a href={`mailto:${COPY.founderEmail}`} style={{ color: '#6a6a6a', textDecoration: 'none' }}>{COPY.founderEmail}</a>
-          </div>
-        </footer>
-      </div>
+      {/* FOOTER */}
+      <footer style={{ ...SECTION, paddingTop: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 'var(--space-3)' : 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-muted)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          <img src={LOGO_SRC} alt="Codos" style={{ height: 16, width: 'auto', display: 'block' }} />
+          <span>© {new Date().getFullYear()} Codos, Inc.</span>
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
+          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Privacy</a>
+          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Terms</a>
+          <a href={`mailto:${COPY.founderEmail}`} style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{COPY.founderEmail}</a>
+        </div>
+      </footer>
     </div>
   );
 }
