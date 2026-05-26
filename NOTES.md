@@ -210,3 +210,39 @@ the 2.6MB particle PNG on cold mid-scroll loads (virtual-time decode race). So a
 verification screenshots came back blank even though the DOM/rects were correct
 (proven via injected debug readouts). None of this affects real browsers. Worth a
 quick manual pass at a true ~375px width in the morning.
+
+---
+
+## Revision round (post-review feedback)
+
+Implemented the requested changes + the updated Figma frame 61:793 (the graph
+infographic with its connector paths):
+
+- **Logo**: fixed `logo.svg` (`preserveAspectRatio="none"` → proper intrinsic
+  `width/height`, no more distortion) and halved the hero logo size
+  (`clamp(24…38px)` → `clamp(13…19px)`).
+- **Partner logos**: replaced the numbered text credentials with the real wordmarks
+  from `/assets/logo/` (mckinsey, meta, `Union.svg` = cyber·Fund, everclear) under a
+  "Backed by builders from" eyebrow. Per-logo height factors normalize their optical
+  sizes.
+- **Hid sections**: removed the `FeelingSection` ("The feeling") and the
+  `We help you become AI-native.` approach section (`#solution`) entirely; dropped
+  the now-dead "Solution" nav link.
+- **Alignment**: refactored the shared header into `StepSection` — the section's
+  visual (`children`) now lives in the **right column**, so the diagnostic card
+  aligns under "conduct" and the graph aligns under "setting" (not under the step
+  kicker). Mobile stacks as before.
+- **Graph rebuilt to 61:793 with connector paths**: `GraphDiagram` reproduces the
+  native 1153×777 composition — nodes positioned by % of the design box, sized in
+  container-query units (`cqw`) so the whole diagram scales as one unit, and the
+  branching connectors drawn in a shared-coordinate `<svg>` (converge sources→raw,
+  fan raw→observers, converge observers→judge, fan judge→vaults). `min-width: 38rem`
+  keeps it legible; it scrolls horizontally on phones (dense desktop diagram).
+- **Particle (graph)**: now on the LEFT, vertically centred and **fully visible**
+  (no awkward crop); faint backdrop on mobile. Still a standalone `<img>`, so no
+  conflict with the hero particle's ref-based scroll animation.
+- Authored the connectors rather than wiring the exported Figma edge SVGs (the
+  export's name→file hash mapping is fragile, and fixed absolute SVGs wouldn't be
+  responsive); the authored curves match the frame's converge/fan pattern and align
+  perfectly because they share the node coordinate space. Verified diagnostic + graph
+  in isolation at 1440 and 500px.

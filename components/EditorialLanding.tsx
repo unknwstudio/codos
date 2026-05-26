@@ -14,6 +14,14 @@ const ACCENT = '#F26B1F';
 const PARTICLES_SRC = '/assets/figma/particles.png';
 const LOGO_SRC = '/assets/figma/logo.svg';
 
+// Partner / backer logos (real wordmarks from /assets/logo/). Union.svg = cyber·Fund.
+const PARTNER_LOGOS = [
+  { src: '/assets/logo/mckinsey.svg', alt: 'McKinsey & Co', h: 0.95 },
+  { src: '/assets/logo/meta.svg', alt: 'Meta', h: 0.78 },
+  { src: '/assets/logo/Union.svg', alt: 'cyber·Fund', h: 0.7 },
+  { src: '/assets/logo/everclear.svg', alt: 'Everclear', h: 0.85 },
+];
+
 // ───────────────── Responsive helper ─────────────────
 function useIsMobile(breakpoint = 760) {
   const [isMobile, setIsMobile] = useState(() =>
@@ -31,7 +39,6 @@ function useIsMobile(breakpoint = 760) {
 // ───────────────── COPY ─────────────────
 const COPY = {
   nav: [
-    { label: 'Solution', href: '#solution' },
     { label: 'How it works', href: '#how' },
     { label: 'Team', href: '#team' },
   ],
@@ -269,77 +276,6 @@ function LogoPill({ label, dark = false }: { label: string; dark?: boolean }) {
   );
 }
 
-// ───────────────── FeelingSection ─────────────────
-function FeelingSection() {
-  const ref = useRef<HTMLElement | null>(null);
-  const [visible, setVisible] = useState(false);
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      });
-    }, { threshold: 0.35 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const lines = [
-    { text: 'You feel FOMO about AI.',                       color: 'rgba(0,0,0,0.32)', italic: false, scale: 1.0,  delay: 0,    bold: false },
-    { text: 'You sense the team should be moving faster.',   color: 'rgba(0,0,0,0.55)', italic: false, scale: 1.05, delay: 350,  bold: false },
-    { text: "It's time to accelerate.",                       color: ACCENT,            italic: true,  scale: 1.22, delay: 750,  bold: true  },
-  ];
-
-  return (
-    <section
-      ref={ref}
-      style={{
-        padding: 'var(--section-y) 0',
-        textAlign: 'center',
-        borderTop: '1px solid rgba(0,0,0,0.08)',
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{
-        fontFamily: "'Urbanist', system-ui, sans-serif",
-        fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
-        textTransform: 'uppercase', color: ACCENT, marginBottom: isMobile ? 28 : 48,
-        opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(8px)',
-        transition: 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-      }}>
-        The feeling
-      </div>
-      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: isMobile ? 18 : 28, padding: isMobile ? '0 12px' : 0 }}>
-        {lines.map((ln, i) => (
-          <div
-            key={i}
-            style={{
-              fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: (isMobile ? 22 : 44) * ln.scale, lineHeight: 1.2, letterSpacing: isMobile ? -0.4 : -0.8,
-              color: ln.color, fontStyle: ln.italic ? 'italic' : 'normal',
-              fontWeight: ln.bold ? 500 : 400,
-              opacity: visible ? 1 : 0,
-              transform: visible ? 'translateX(0) translateY(0)' : `translateX(${i % 2 === 0 ? '-80px' : '80px'}) translateY(20px)`,
-              filter: visible ? 'blur(0)' : 'blur(6px)',
-              transition: `opacity 800ms cubic-bezier(0.2, 0.8, 0.2, 1) ${ln.delay}ms, transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1) ${ln.delay}ms, filter 800ms ease ${ln.delay}ms`,
-              willChange: 'transform, opacity, filter',
-            }}
-          >
-            {ln.text}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 // ───────────────── How it works (sequential fly-in) ─────────────────
 function HowItWorksSection() {
   const ref = useRef<HTMLElement | null>(null);
@@ -437,10 +373,13 @@ function Chip({ children, tone = 'plain' }: { children: React.ReactNode; tone?: 
   );
 }
 
-// "_stepN" + mixed verb/method headline (verb = headline face, method = mono),
-// two-column on desktop. Shared by the diagnostic and graph sections.
-function StepHeader({ step, verb, method, tagline, rightSub }: {
+// "_stepN" (left col) + mixed verb/method headline (right col). The section's
+// visual (`children`) lives in the RIGHT column, so it aligns under the headline
+// ("conduct" / "setting"), not under the step. `bgVisual` is an absolute layer
+// behind everything (used for the graph's left-side particle).
+function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVisual, children }: {
   step: string; verb: string; method: string; tagline: string; rightSub?: string;
+  dataSection: string; bgVisual?: React.ReactNode; children: React.ReactNode;
 }) {
   const isMobile = useIsMobile();
   const heading: CSSProperties = {
@@ -454,23 +393,28 @@ function StepHeader({ step, verb, method, tagline, rightSub }: {
     color: 'var(--color-text)', maxWidth: '34ch',
   };
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.85fr) minmax(0, 2fr)',
-      gap: isMobile ? 'var(--space-4)' : 'var(--space-8)', alignItems: 'start',
-    }}>
-      <div>
-        <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
-        <p style={sub}>{tagline}</p>
+    <section data-section={dataSection} style={{ position: 'relative', overflow: 'hidden', padding: 'var(--section-y) 0' }}>
+      {bgVisual}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
+        gap: isMobile ? 'var(--space-5)' : 'var(--space-8)', alignItems: 'start',
+        position: 'relative', zIndex: 1,
+      }}>
+        <div>
+          <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
+          <p style={sub}>{tagline}</p>
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <h2 style={heading}>
+            <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
+            <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
+          </h2>
+          {rightSub ? <p style={sub}>{rightSub}</p> : null}
+          <div style={{ marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>{children}</div>
+        </div>
       </div>
-      <div>
-        <h2 style={heading}>
-          <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
-          <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
-        </h2>
-        {rightSub ? <p style={sub}>{rightSub}</p> : null}
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -489,12 +433,9 @@ function DiagnosticSection() {
     lineHeight: 1.4, color: 'var(--color-text)',
   };
   return (
-    <section data-section="diagnostic" style={{ padding: isMobile ? 'var(--space-10) 0' : 'var(--space-12) 0' }}>
-      <StepHeader step={d.step} verb={d.verb} method={d.method} tagline={d.tagline} />
-
-      {/* Live interview mock */}
+    <StepSection dataSection="diagnostic" step={d.step} verb={d.verb} method={d.method} tagline={d.tagline}>
+      {/* Live interview mock — aligned under the "conduct" headline */}
       <div style={{
-        marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)',
         background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
         padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
         display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
@@ -542,87 +483,103 @@ function DiagnosticSection() {
           </div>
         </div>
       </div>
-    </section>
+    </StepSection>
   );
 }
 
-// ───────────────── ContextGraphSection (Figma 55:22) ─────────────────
-// A node in the context-graph flow: optional kicker, title, white chips.
-function GraphCard({ kicker, label, chips, highlight = false }: {
-  kicker?: string; label: string; chips: string[]; highlight?: boolean;
+// ───────────────── ContextGraphSection (Figma 55:22 / 61:793) ─────────────────
+// A graph node sized in container-query units (cqw) so the whole diagram scales
+// as one unit with its container.
+function GNode({ kicker, label, chips, highlight = false, style }: {
+  kicker?: string; label: string; chips: string[]; highlight?: boolean; style: CSSProperties;
 }) {
   const ink = highlight ? 'var(--color-highlight-contrast)' : 'var(--color-text)';
   return (
     <div style={{
+      position: 'absolute', boxSizing: 'border-box',
       background: highlight ? 'var(--color-highlight)' : 'var(--color-panel)',
-      borderRadius: 'var(--radius-md)', padding: 'var(--space-4)',
-      display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
+      borderRadius: '0.7cqw', padding: '0.9cqw',
+      display: 'flex', flexDirection: 'column', gap: '0.55cqw',
+      ...style,
     }}>
-      {kicker ? (
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.14em', textTransform: 'uppercase', color: ink, opacity: 0.7 }}>{kicker}</div>
-      ) : null}
-      <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-h3)', lineHeight: 1.1, color: ink }}>{label}</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-        {chips.map((c) => <Chip key={c}>{c}</Chip>)}
+      {kicker ? <div style={{ fontFamily: 'var(--font-body)', fontSize: '1.2cqw', letterSpacing: '0.12em', textTransform: 'uppercase', color: ink, opacity: 0.7, lineHeight: 1 }}>{kicker}</div> : null}
+      <div style={{ fontFamily: 'var(--font-body)', fontSize: '2.6cqw', lineHeight: 1.05, color: ink, whiteSpace: 'nowrap' }}>{label}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45cqw' }}>
+        {chips.map((c) => (
+          <span key={c} style={{ background: 'var(--color-panel-chip)', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: '1.2cqw', lineHeight: 1.3, padding: '0.2cqw 0.5cqw', borderRadius: '0.3cqw', whiteSpace: 'nowrap' }}>{c}</span>
+        ))}
       </div>
     </div>
   );
 }
 
-// Vertical connector between graph tiers.
-const GraphLink: React.FC = () => (
-  <div aria-hidden="true" style={{ width: 'var(--border-thin)', height: 'var(--space-6)', background: 'var(--color-border-strong)', margin: '0 auto' }} />
-);
+// The context-graph infographic (Figma 61:793, native 1153×777) as a fluid
+// composition: nodes positioned by % of the design box, branching connectors
+// drawn in an SVG sharing that coordinate system, everything sized in cqw so it
+// scales together. A min-width keeps text legible (the diagram scrolls on phones).
+function GraphDiagram() {
+  const g = COPY.graph;
+  const W = 1153, H = 777;
+  const pct = (x: number, y: number, w: number): CSSProperties =>
+    ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, width: `${(w / W) * 100}%` });
+  const Y = { srcBot: 111, rawTop: 162, rawBot: 273, obsTop: 324, obsBot: 444, judgeTop: 495, judgeBot: 606, vaultTop: 657 };
+  const obs = [{ x: 194, w: 156 }, { x: 356, w: 174 }, { x: 536, w: 218 }, { x: 760, w: 200 }];
+  const vault = [{ x: 0, w: 380 }, { x: 386, w: 380 }, { x: 772, w: 381 }];
+  const cx = (n: { x: number; w: number }) => n.x + n.w / 2;
+  const rawCx = 577, judgeCx = 577;
+  const curve = (x1: number, y1: number, x2: number, y2: number) => {
+    const my = (y1 + y2) / 2;
+    return `M ${x1} ${y1} C ${x1} ${my} ${x2} ${my} ${x2} ${y2}`;
+  };
+  const paths = [
+    ...[345, 470, 577, 690, 810].map((x) => curve(x, Y.srcBot, rawCx, Y.rawTop)),
+    ...obs.map((o) => curve(rawCx, Y.rawBot, cx(o), Y.obsTop)),
+    ...obs.map((o) => curve(cx(o), Y.obsBot, judgeCx, Y.judgeTop)),
+    ...vault.map((v) => curve(judgeCx, Y.judgeBot, cx(v), Y.vaultTop)),
+  ];
+  return (
+    <div style={{ width: '100%', overflowX: 'auto' }}>
+      <div style={{ containerType: 'inline-size', position: 'relative', width: '100%', minWidth: '38rem', aspectRatio: `${W} / ${H}` }}>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
+          {paths.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke="var(--color-border-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          ))}
+        </svg>
+        <GNode label={g.sources.label} chips={g.sources.chips} style={pct(0, 0, W)} />
+        <GNode label={g.rawData.label} chips={g.rawData.chips} style={pct(453, Y.rawTop, 248)} />
+        {g.observers.map((o, i) => (
+          <GNode key={o.label} kicker={o.kicker} label={o.label} chips={o.chips} style={pct(obs[i].x, Y.obsTop, obs[i].w)} />
+        ))}
+        <GNode label={g.judge.label} chips={g.judge.chips} highlight style={pct(379, Y.judgeTop, 396)} />
+        {g.vaults.map((v, i) => (
+          <GNode key={v.label} kicker={v.kicker} label={v.label} chips={v.chips} style={pct(vault[i].x, Y.vaultTop, vault[i].w)} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ContextGraphSection() {
-  const isMobile = useIsMobile();
   const g = COPY.graph;
-  // NOTE: this is a standalone static <img>. The hero's scroll animation targets
-  // its own element by ref (not a selector), so this instance never conflicts.
+  const isMobile = useIsMobile();
+  // particle 1 — LEFT side, fully visible (not cropped). Standalone static <img>;
+  // the hero animation targets its own element by ref, so there's no conflict.
+  const particle = (
+    <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
+      position: 'absolute', zIndex: 0, pointerEvents: 'none', userSelect: 'none',
+      left: isMobile ? '50%' : '0',
+      top: isMobile ? '10%' : '50%',
+      transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
+      width: isMobile ? '74%' : 'clamp(12rem, 22vw, 22rem)', height: 'auto',
+      opacity: isMobile ? 0.16 : 0.95,
+    }} />
+  );
   return (
-    <section data-section="graph" style={{ position: 'relative', overflow: 'hidden', padding: isMobile ? 'var(--space-10) 0' : 'var(--space-12) 0' }}>
-      <StepHeader step={g.step} verb={g.verb} method={g.method} tagline={COPY.diagnostic.tagline} rightSub={g.tagline} />
-
-      <div style={{ position: 'relative', marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>
-        {/* particle 1 — LEFT side, decorative, behind the graph */}
-        <img
-          src={PARTICLES_SRC}
-          alt=""
-          aria-hidden="true"
-          style={{
-            position: 'absolute', left: isMobile ? '-28%' : '-9%', top: '28%',
-            width: isMobile ? '92%' : 'clamp(260px, 28vw, 440px)', height: 'auto',
-            opacity: isMobile ? 0.22 : 0.95, zIndex: 0,
-            pointerEvents: 'none', userSelect: 'none',
-          }}
-        />
-
-        {/* graph flow (right-biased, above the particle) */}
-        <div style={{
-          position: 'relative', zIndex: 1,
-          marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'min(100%, 76%)',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <GraphCard label={g.sources.label} chips={g.sources.chips} />
-          <GraphLink />
-          <div style={{ width: isMobile ? '100%' : '58%', margin: '0 auto' }}>
-            <GraphCard label={g.rawData.label} chips={g.rawData.chips} />
-          </div>
-          <GraphLink />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-3)' }}>
-            {g.observers.map((o) => <GraphCard key={o.label} kicker={o.kicker} label={o.label} chips={o.chips} />)}
-          </div>
-          <GraphLink />
-          <div style={{ width: isMobile ? '100%' : '62%', margin: '0 auto' }}>
-            <GraphCard label={g.judge.label} chips={g.judge.chips} highlight />
-          </div>
-          <GraphLink />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-3)' }}>
-            {g.vaults.map((v) => <GraphCard key={v.label} kicker={v.kicker} label={v.label} chips={v.chips} />)}
-          </div>
-        </div>
-      </div>
-    </section>
+    <StepSection dataSection="graph" step={g.step} verb={g.verb} method={g.method}
+      tagline={COPY.diagnostic.tagline} rightSub={g.tagline} bgVisual={particle}>
+      <GraphDiagram />
+    </StepSection>
   );
 }
 
@@ -714,7 +671,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: `var(--space-5) ${gutter}`,
       }}>
-        <img src={LOGO_SRC} alt="Codos" style={{ height: 'clamp(24px, 2.2vw, 38px)', width: 'auto', display: 'block' }} />
+        <img src={LOGO_SRC} alt="Codos" style={{ height: 'clamp(13px, 1.15vw, 19px)', width: 'auto', display: 'block' }} />
         <nav style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-6)', fontSize: 'var(--text-body-sm)' }}>
           {!isMobile && COPY.nav.map((n) => (
             <a key={n.label} href={n.href} style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{n.label}</a>
@@ -778,18 +735,24 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
           </div>
         </div>
 
-        {/* Credentials */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-          {COPY.heroCredentials.map((c) => (
-            <div key={c.num} style={{
-              display: 'flex', gap: 'var(--space-3)', alignItems: 'baseline',
-              fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
-              color: 'var(--color-faint)', letterSpacing: '0.04em',
-            }}>
-              <span style={{ color: 'var(--color-accent)' }}>{c.num}</span>
-              <span>{c.label}</span>
-            </div>
-          ))}
+        {/* Credentials — partner / backer logos */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <span style={{
+            fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+            letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-faint)',
+          }}>
+            Backed by builders from
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(var(--space-4), 3vw, var(--space-8))', flexWrap: 'wrap' }}>
+            {PARTNER_LOGOS.map((l) => (
+              <img
+                key={l.alt}
+                src={l.src}
+                alt={l.alt}
+                style={{ height: `calc(${l.h} * clamp(16px, 1.7vw, 24px))`, width: 'auto', display: 'block', opacity: 0.72 }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -816,38 +779,6 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       <Hero onCta={handleCta} />
 
       <div style={innerStyle}>
-        <FeelingSection />
-
-        {/* APPROACH */}
-        <section id="solution" style={{ padding: 'var(--section-y) 0' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1.5fr',
-            gap: isMobile ? 24 : 80,
-            alignItems: 'start',
-            marginBottom: isMobile ? 36 : 56,
-          }}>
-            <div>
-              <div style={S.kicker}>{COPY.approachKicker}</div>
-              <h2 style={{ ...S.serif, fontSize: isMobile ? 34 : 54, lineHeight: 1.05, letterSpacing: isMobile ? -0.8 : -1.2, fontWeight: 400, margin: 0 }}>
-                {COPY.approachTitle}
-              </h2>
-            </div>
-            <p style={{ ...S.body, fontSize: isMobile ? 16 : 18, maxWidth: 520, marginTop: isMobile ? 0 : 44 }}>
-              {COPY.approachSub}
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 16 : 32 }}>
-            {COPY.approach.map((a) => (
-              <div key={a.num} style={{ background: '#fff', borderRadius: 20, padding: isMobile ? 24 : 36, border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ ...S.serif, fontStyle: 'italic', fontSize: isMobile ? 32 : 40, color: ACCENT, fontWeight: 400, marginBottom: 16 }}>{a.num}</div>
-                <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 700, marginBottom: 10, letterSpacing: -0.3 }}>{a.name}</div>
-                <div style={{ ...S.body, fontSize: isMobile ? 14 : 15 }}>{a.body}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* DIAGNOSTIC (Figma 55:2) — replaces the old switcher */}
         <DiagnosticSection />
 
