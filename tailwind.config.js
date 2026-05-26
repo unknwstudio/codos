@@ -80,7 +80,10 @@ export default {
         'paper-warm': 'var(--color-paper-warm)',
         ink: 'var(--color-ink)',
         'ink-soft': 'var(--color-ink-soft)',
-        white: 'var(--color-white)',
+        // NOTE: do not remap Tailwind's `white`/`black` to a var() — that
+        // breaks opacity modifiers (e.g. bg-white/[0.04]) used by the app
+        // pages, since an alpha can't be injected into a CSS var. Tokenize
+        // black/white per-use via arbitrary values instead.
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
