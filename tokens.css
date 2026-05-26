@@ -76,7 +76,7 @@
      centralized here so /ds and every page share it. Maxima match the brand
      (Figma) desktop sizes; minima keep mobile legible. Headline roles render in
      --font-headline; body roles in --font-body. */
-  --text-display: clamp(2.75rem, 0.5rem + 6.7vw, 8.125rem);  --leading-display: 1.0;  /* hero → 130px */
+  --text-display: clamp(2.25rem, 0.5rem + 6.7vw, 8.125rem);  --leading-display: 1.0;  /* hero → 130px */
   --text-h1: clamp(2rem, 1rem + 2.8vw, 3.75rem);             --leading-h1: 1.05;       /* section → 60px */
   --text-h2: clamp(1.6rem, 1rem + 1.7vw, 2.5rem);            --leading-h2: 1.1;        /* → 40px */
   --text-h3: clamp(1.375rem, 0.9rem + 1.2vw, 1.875rem);      --leading-h3: 1.15;       /* → 30px */

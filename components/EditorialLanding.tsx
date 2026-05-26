@@ -9,6 +9,11 @@ import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 
 
 const ACCENT = '#F26B1F';
 
+// Shared brand assets exported from Figma (particle cloud + CODOS wordmark).
+// The particle PNG is reused across the hero, diagnostic and graph frames.
+const PARTICLES_SRC = '/assets/figma/particles.png';
+const LOGO_SRC = '/assets/figma/logo.svg';
+
 // ───────────────── Responsive helper ─────────────────
 function useIsMobile(breakpoint = 760) {
   const [isMobile, setIsMobile] = useState(() =>
@@ -34,6 +39,18 @@ const COPY = {
   heroSub: 'We make mid-sized organizations AI-native.',
   ctaPrimary: 'Book a demo',
   founderEmail: 'dima@codos.ai',
+
+  // New hero (Figma 33:78)
+  heroWordLeft: 'install',
+  heroWordRight: 'evolution',
+  heroLede: 'the AI layer that keeps your company evolving — on its own',
+  heroCtaSecondary: 'E-mail founders',
+  heroCredentials: [
+    { num: '01', label: 'McKinsey & Co' },
+    { num: '02', label: 'Meta' },
+    { num: '03', label: 'cyber·Fund' },
+    { num: '04', label: 'Everclear' },
+  ],
 
   approachKicker: 'Our approach',
   approachTitle: 'We help you become AI-native.',
@@ -1229,6 +1246,134 @@ function HowItWorksSection() {
   );
 }
 
+// ───────────────── Hero (Figma 33:78) ─────────────────
+// Full-bleed brand hero. Split "install / evolution" headline (GT Alpina
+// Typewriter), particle cloud centerpiece, lede + dual CTAs, credentials.
+// Every value comes from a token (var(--…)); no raw Figma px/hex.
+function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
+  const isMobile = useIsMobile();
+  const gutter = isMobile ? 'var(--space-5)' : 'var(--space-8)';
+
+  const headlineWord: CSSProperties = {
+    fontFamily: 'var(--font-headline)',
+    fontSize: 'var(--text-display)',
+    lineHeight: 'var(--leading-display)',
+    fontWeight: 'var(--font-weight-regular)' as unknown as number,
+    letterSpacing: '-0.02em',
+    margin: 0,
+  };
+  const btnBase: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)',
+    lineHeight: 1, textDecoration: 'none', cursor: 'pointer',
+    padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)',
+    border: 'var(--border-thin) solid transparent', whiteSpace: 'nowrap',
+  };
+  const btnFilled: CSSProperties = {
+    ...btnBase, background: 'var(--color-surface)', color: 'var(--color-text)',
+  };
+  const btnOutline: CSSProperties = {
+    ...btnBase, background: 'transparent', color: 'var(--color-text)',
+    borderColor: 'var(--color-border-strong)',
+  };
+
+  return (
+    <section
+      style={{
+        position: 'relative', overflow: 'hidden',
+        background: 'var(--color-bg)', color: 'var(--color-text)',
+        minHeight: isMobile ? '92svh' : '100svh',
+        display: 'flex', flexDirection: 'column',
+        fontFamily: 'var(--font-body)',
+      }}
+    >
+      {/* Top bar — logo + nav */}
+      <header style={{
+        position: 'relative', zIndex: 3, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: `var(--space-5) ${gutter}`,
+      }}>
+        <img src={LOGO_SRC} alt="Codos" style={{ height: 'clamp(24px, 2.2vw, 38px)', width: 'auto', display: 'block' }} />
+        <nav style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-6)', fontSize: 'var(--text-body-sm)' }}>
+          {!isMobile && COPY.nav.map((n) => (
+            <a key={n.label} href={n.href} style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{n.label}</a>
+          ))}
+          <a href="#demo" onClick={onCta} style={{
+            display: 'inline-flex', alignItems: 'center',
+            background: 'var(--color-accent)', color: 'var(--color-accent-contrast)',
+            padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-full)',
+            textDecoration: 'none', fontSize: 'var(--text-body-sm)', whiteSpace: 'nowrap',
+          }}>
+            {COPY.ctaPrimary}
+          </a>
+        </nav>
+      </header>
+
+      {/* Particle cloud — centerpiece (scroll-animated in Task 2) */}
+      <img
+        data-hero-particles
+        src={PARTICLES_SRC}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute', left: '50%', top: isMobile ? '40%' : 'clamp(2rem, 4vw, 5rem)',
+          transform: 'translateX(-50%)',
+          width: isMobile ? '124%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
+          pointerEvents: 'none', userSelect: 'none', zIndex: 1,
+        }}
+      />
+
+      {/* Split headline */}
+      <div style={{ position: 'relative', zIndex: 2, padding: `0 ${gutter}`, marginTop: isMobile ? 'var(--space-5)' : 'var(--space-2)', flexShrink: 0 }}>
+        <h1 style={{
+          margin: 0, display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between',
+          gap: isMobile ? 0 : 'var(--space-6)',
+        }}>
+          <span style={headlineWord}>{COPY.heroWordLeft}</span>
+          <span style={{ ...headlineWord, textAlign: isMobile ? 'left' : 'right' }}>{COPY.heroWordRight}</span>
+        </h1>
+      </div>
+
+      {/* Lower content — lede + CTAs (top), credentials (bottom) */}
+      <div style={{
+        position: 'relative', zIndex: 2, flex: '1 1 auto',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 'var(--space-8)',
+        padding: `var(--space-6) ${gutter} var(--space-8)`,
+      }}>
+        <div style={{ maxWidth: isMobile ? '100%' : 'min(100%, 28rem)' }}>
+          <p style={{
+            margin: 0, fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)',
+            color: 'var(--color-text)', maxWidth: '100%', overflowWrap: 'break-word',
+          }}>
+            {COPY.heroLede}
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-5)', flexWrap: 'wrap' }}>
+            <a href="#demo" onClick={onCta} style={btnFilled}>{COPY.ctaPrimary}</a>
+            <a href={`mailto:${COPY.founderEmail}`} style={btnOutline}>{COPY.heroCtaSecondary}</a>
+          </div>
+        </div>
+
+        {/* Credentials */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+          {COPY.heroCredentials.map((c) => (
+            <div key={c.num} style={{
+              display: 'flex', gap: 'var(--space-3)', alignItems: 'baseline',
+              fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+              color: 'var(--color-faint)', letterSpacing: '0.04em',
+            }}>
+              <span style={{ color: 'var(--color-accent)' }}>{c.num}</span>
+              <span>{c.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ───────────────── Editorial Landing (root) ─────────────────
 type Props = { onCtaClick?: () => void };
 
@@ -1245,76 +1390,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
   return (
     <div style={S.wrap}>
-      {/* Nav */}
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: isMobile ? '28px 20px 16px' : '80px 48px 24px',
-          maxWidth: 1180, margin: '0 auto',
-        }}
-      >
-        <CodosLogo size={isMobile ? 22 : 26} color="#1a1a1a" />
-        <nav style={{ display: 'flex', gap: isMobile ? 14 : 32, fontSize: isMobile ? 13 : 14, alignItems: 'center' }}>
-          {!isMobile && COPY.nav.map((n) => (
-            <a key={n.label} href={n.href} style={{ color: '#3a3a3a', textDecoration: 'none' }}>{n.label}</a>
-          ))}
-          <a
-            href="#demo"
-            onClick={handleCta}
-            style={{
-              background: ACCENT, color: '#fff',
-              padding: isMobile ? '8px 14px' : '10px 18px',
-              borderRadius: 999, textDecoration: 'none', fontWeight: 600,
-              fontSize: isMobile ? 12 : 13, whiteSpace: 'nowrap',
-            }}
-          >
-            Book a demo
-          </a>
-        </nav>
-      </div>
+      {/* HERO (Figma 33:78) — full-bleed */}
+      <Hero onCta={handleCta} />
 
       <div style={innerStyle}>
-        {/* HERO */}
-        <section style={{ padding: isMobile ? '32px 0 56px' : '80px 0 100px', textAlign: 'center' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 14px', border: '1px solid rgba(0,0,0,0.15)',
-            borderRadius: 999, fontSize: isMobile ? 11 : 12, color: '#3a3a3a',
-            fontFamily: '"Geist Mono", monospace', letterSpacing: 0.08,
-            marginBottom: isMobile ? 24 : 32,
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT }} />
-            {COPY.heroEyebrow.toUpperCase()}
-          </div>
-          <h1
-            style={{
-              ...S.serif,
-              fontSize: isMobile ? 44 : 84,
-              lineHeight: isMobile ? 1.05 : 1.0,
-              letterSpacing: isMobile ? -1.2 : -2.5,
-              fontWeight: 400, margin: '0 auto 24px', maxWidth: 900,
-            }}
-          >
-            AI transformation,<br />
-            <em style={{ fontStyle: 'italic', color: ACCENT }}>as software.</em>
-          </h1>
-          <p style={{ ...S.body, fontSize: isMobile ? 16 : 20, maxWidth: 620, margin: '0 auto 32px', color: '#3a3a3a' }}>
-            {COPY.heroSub}
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#demo" onClick={handleCta} style={S.btn}>{COPY.ctaPrimary} →</a>
-            <a href={`mailto:${COPY.founderEmail}`} style={S.btnGhost}>{isMobile ? 'Email founders' : 'Or email the founders'}</a>
-          </div>
-
-          <div style={{
-            marginTop: isMobile ? 48 : 72,
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            gap: isMobile ? 18 : 36, opacity: 0.7, flexWrap: 'wrap',
-          }}>
-            {COPY.backers.map((b) => <LogoPill key={b} label={b} dark={false} />)}
-          </div>
-        </section>
-
         <FeelingSection />
 
         {/* APPROACH */}

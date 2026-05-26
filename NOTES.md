@@ -66,3 +66,34 @@ access to the "Brand" file → used the **local Figma Dev Mode MCP** at
 `127.0.0.1:3845` (the one the prompt pointed to) via a small JSON-RPC/SSE helper.
 Assets written to `public/assets/figma/{hero,diagnostic,graph}/`. The particle PNG
 is byte-identical across all three frames (one shared asset).
+
+---
+
+## Task 1 — new hero from Figma (33:78)
+
+- Built a new full-bleed `Hero` component in `EditorialLanding.tsx`, replacing both
+  the old top nav and the old centered hero. Split "install / evolution" headline
+  (GT Alpina Typewriter via `--font-headline`), the particle cloud centerpiece, a
+  DM-Mono lede, dual CTAs (filled + outline), logo top-left, nav top-right, and a
+  numbered credentials list bottom-left — matching the frame.
+- **Everything is token-driven** via `var(--…)` inside inline styles (the page's
+  existing styling convention): `--text-display/intro/body-*`, `--space-*`,
+  `--color-bg/text/accent/surface/border-strong/faint`, `--radius-full`, fonts.
+  No raw Figma px/hex.
+- Adaptations (noted, faithful to intent): Figma's bottom-left vector wordmark
+  (`Frame 23`) → a real, legible numbered credentials list built from `COPY`
+  (responsive + maintainable vs. a 40KB glyph trace); the off-frame decorative
+  vectors (43/51/63/65, all at x≥1984 outside the 1920 frame) → omitted; window/
+  status dots and panel chips → CSS, not exported SVGs. Logo + particle cloud are
+  the only retained Figma raster/vector assets.
+- Hero headline button text uses `--text-body-lg` (≤20px), not the literal Figma
+  30px — 30px was oversized for real viewports; the token reads correctly fluid.
+- **Responsive**: verified at 1440 / 1280 / 500px. Headline splits row→column,
+  particle re-anchors, lede wraps (overflowWrap). Lowered `--text-display` clamp
+  floor to 2.25rem so the headline fits narrow widths. (Note: headless Chrome
+  floors window width at 500px, so true ~375px relies on the clamp + wrap; final
+  small-mobile pass is Task 5.)
+- Perf note: `particles.png` is 2.6MB (detailed pointillist cloud). Acceptable for
+  now; a WebP/downscaled variant would be a good follow-up optimization.
+- `LogoPill` is now unused (old backers strip removed) but left in place; harmless
+  (tsconfig has no noUnusedLocals).
