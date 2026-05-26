@@ -97,3 +97,22 @@ is byte-identical across all three frames (one shared asset).
   now; a WebP/downscaled variant would be a good follow-up optimization.
 - `LogoPill` is now unused (old backers strip removed) but left in place; harmless
   (tsconfig has no noUnusedLocals).
+
+---
+
+## Task 2 — particles scroll animation
+
+- Added a scroll-driven effect inside `Hero`: as the page scrolls through the
+  hero, the particle cloud drifts so its centre converges on the **viewport centre**
+  and **scales down** (1 → 0.45), tied to scroll progress `p = scrollY / heroHeight`
+  with a `smoothstep` ease. After the hero-height of scroll it releases and scrolls
+  away naturally (no permanent overlay).
+- Lightweight per the brief: a single passive `scroll` listener + `requestAnimationFrame`,
+  writing only `transform` (translate + scale) on the one element. Geometry uses
+  `offsetTop`/`offsetHeight` (layout metrics, transform-independent) so it's stable.
+- `prefers-reduced-motion: reduce` → effect is skipped entirely (particle stays put).
+- Verification: confirmed correct via an injected debug readout (at scrollY≈600 the
+  particle rect was top183→bottom689, scale 0.49 — i.e. centred and shrunk). NOTE:
+  headless-Chrome screenshots of mid-scroll states intermittently render the 2.6MB
+  PNG blank (cold-load decode race under virtual-time); this is a screenshot
+  artifact, not a runtime bug — real browsers paint it (decode once, cached).

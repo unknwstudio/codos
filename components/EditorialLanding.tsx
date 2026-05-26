@@ -1254,6 +1254,46 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
   const isMobile = useIsMobile();
   const gutter = isMobile ? 'var(--space-5)' : 'var(--space-8)';
 
+  // ── Scroll-driven particle (Task 2) ──
+  // As the hero scrolls into the next section the particle cloud drifts toward
+  // the viewport centre and scales down, tied to scroll progress. rAF-throttled
+  // transform writes only; honours prefers-reduced-motion.
+  const sectionRef = useRef<HTMLElement>(null);
+  const particleRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const sec = sectionRef.current;
+    const img = particleRef.current;
+    if (!sec || !img) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    let raf = 0;
+    const smoothstep = (t: number) => t * t * (3 - 2 * t);
+    const update = () => {
+      raf = 0;
+      const heroH = sec.offsetHeight || 1;
+      // progress through the hero's exit (0 at top → 1 after one hero-height)
+      const p = Math.min(1, Math.max(0, window.scrollY / heroH));
+      const ease = smoothstep(p);
+      // Particle centre's natural viewport-Y once the page has scrolled `heroH`.
+      // offsetTop/offsetHeight are layout metrics (transform-independent).
+      const naturalCenterAtEnd = img.offsetTop + img.offsetHeight / 2 - heroH;
+      const drift = window.innerHeight / 2 - naturalCenterAtEnd; // → viewport centre
+      const ty = ease * drift;
+      const scale = 1 - 0.55 * ease;
+      img.style.transform = `translate(-50%, ${ty.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isMobile]);
+
   const headlineWord: CSSProperties = {
     fontFamily: 'var(--font-headline)',
     fontSize: 'var(--text-display)',
@@ -1279,6 +1319,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
 
   return (
     <section
+      ref={sectionRef}
       style={{
         position: 'relative', overflow: 'hidden',
         background: 'var(--color-bg)', color: 'var(--color-text)',
@@ -1311,13 +1352,14 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
 
       {/* Particle cloud — centerpiece (scroll-animated in Task 2) */}
       <img
+        ref={particleRef}
         data-hero-particles
         src={PARTICLES_SRC}
         alt=""
         aria-hidden="true"
         style={{
           position: 'absolute', left: '50%', top: isMobile ? '40%' : 'clamp(2rem, 4vw, 5rem)',
-          transform: 'translateX(-50%)',
+          transform: 'translateX(-50%)', transformOrigin: 'center center', willChange: 'transform',
           width: isMobile ? '124%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
           pointerEvents: 'none', userSelect: 'none', zIndex: 1,
         }}
