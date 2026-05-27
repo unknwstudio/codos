@@ -1141,15 +1141,17 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </div>
       </section>
 
-      {/* FAQ — headline (left) + animated accordion (right); stacks on mobile */}
+      {/* FAQ — headline in column 1 of the step-row grid, accordion in columns 2–3
+          (locked to the SAME grid as the team cards, referencing the shared grid
+          constants directly — not the team section's layout). Stacks on mobile. */}
       <section id="faq" style={SECTION}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
-          gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'start',
+          gridTemplateColumns: isMobile ? '1fr' : STEP_GRID_COLS,
+          gap: isMobile ? 'var(--space-6)' : STEP_GRID_GAP, alignItems: 'start',
         }}>
-          <Reveal><SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} titleMaxW="14ch" /></Reveal>
-          <Reveal delay={90} style={{ minWidth: 0 }}>
+          <Reveal style={{ gridColumn: isMobile ? 'auto' : '1 / 2' }}><SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} titleMaxW="14ch" /></Reveal>
+          <Reveal delay={90} style={{ gridColumn: isMobile ? 'auto' : '2 / 4', minWidth: 0 }}>
             <FaqAccordion />
           </Reveal>
         </div>

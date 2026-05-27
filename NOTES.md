@@ -609,3 +609,13 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
 - Mobile: the outer grid collapses to `1fr` and the explicit `grid-column` spans reset
   to `auto`, so it stacks (headline → cards, cards 2-up → 1-up) with no implicit-column
   blowout.
+
+## Item 4 — align FAQ accordion to the same grid column
+
+- The FAQ section now uses the SAME shared step-row grid (`STEP_GRID_COLS` /
+  `STEP_GRID_GAP`) as the team cards — headline in **column 1**, accordion spanning
+  **columns 2–3** (`grid-column: 2 / 4`). It references the shared grid constants
+  directly, not the team section's layout, so the two are independently locked to the
+  grid (team's layout can change without moving FAQ).
+- Verified live: step-row card 2 = team cards = FAQ accordion all at `left = 499px`.
+- Mobile stacks (single column; `grid-column` → `auto`).
