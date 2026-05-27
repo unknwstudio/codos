@@ -446,53 +446,123 @@ function Reveal({ children, delay = 0, style }: { children: React.ReactNode; del
   );
 }
 
-// "_stepN" (left col) + mixed verb/method headline (right col). The section's
-// visual (`children`) lives in the RIGHT column, so it aligns under the headline
-// ("conduct" / "setting"), not under the step. `bgVisual` is an absolute layer
-// behind everything (used for the graph's left-side particle).
-function StepSection({ step, verb, method, tagline, rightSub, dataSection, children }: {
-  step: string; verb: string; method: string; tagline: string; rightSub?: string;
-  dataSection: string; children: React.ReactNode;
-}) {
+// ───────────────── Pinned step sequence (_stepOne → _stepThree) ─────────────────
+// The three step sections (diagnostic / graph / dashboard) SHARE one left-pinned
+// column. On desktop that column is sticky: as the right-hand content scrolls past
+// it, the step name swaps _stepOne → _stepTwo → _stepThree in sync with the section
+// in view (tracked by an IntersectionObserver). The single scroll particle (driven
+// by the Hero) settles into this same left column and stays pinned across all three,
+// then releases at the END of _stepThree (a sentinel) so it never overruns the
+// "Who it's for" headline. Stacks (no sticky, per-block labels) on mobile;
+// reduced-motion leaves the particle as a static hero centrepiece.
+const STEP_HEADING: CSSProperties = {
+  fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)',
+  fontWeight: 'var(--font-weight-regular)' as unknown as number,
+  letterSpacing: '-0.02em', margin: 0,
+};
+const STEP_SUB: CSSProperties = {
+  margin: 'var(--space-3) 0 0', fontFamily: 'var(--font-body)',
+  fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)',
+  color: 'var(--color-text)', maxWidth: '34ch',
+};
+
+function PinnedSteps() {
   const isMobile = useIsMobile();
-  const heading: CSSProperties = {
-    fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)',
-    fontWeight: 'var(--font-weight-regular)' as unknown as number,
-    letterSpacing: '-0.02em', margin: 0,
-  };
-  const sub: CSSProperties = {
-    margin: 'var(--space-3) 0 0', fontFamily: 'var(--font-body)',
-    fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)',
-    color: 'var(--color-text)', maxWidth: '34ch',
-  };
+  const [active, setActive] = useState(0);
+  const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const steps = [
+    { name: COPY.diagnostic.step, verb: COPY.diagnostic.verb, method: COPY.diagnostic.method, rightSub: undefined as string | undefined, dataSection: 'diagnostic', visual: <DiagnosticVisual /> },
+    { name: COPY.graph.step, verb: COPY.graph.verb, method: COPY.graph.method, rightSub: COPY.graph.tagline, dataSection: 'graph', visual: <GraphDiagram /> },
+    { name: COPY.dashboard.step, verb: COPY.dashboard.verb, method: COPY.dashboard.method, rightSub: COPY.dashboard.rightSub, dataSection: 'dashboard', visual: <ExecDashboard /> },
+  ];
+  const tagline = COPY.diagnostic.tagline;
+
+  // Active step = the last block whose top has crossed a reference line ~38% down
+  // the viewport. Computed from scroll position (not IO crossing events) so it's
+  // deterministic at any scroll offset — including gaps between blocks and after the
+  // last one (where it correctly stays on _stepThree). rAF-throttled.
+  useEffect(() => {
+    let raf = 0;
+    const compute = () => {
+      raf = 0;
+      const line = window.innerHeight * 0.38;
+      let idx = 0;
+      blockRefs.current.forEach((b, i) => {
+        if (b && b.getBoundingClientRect().top <= line) idx = i;
+      });
+      setActive(idx);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute); };
+    compute();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // One step's right-column content. The visual sits OUTSIDE the Reveal: Reveal's
+  // will-change creates a stacking context that would trap the visual above the
+  // scroll particle; keeping it out lets the particle (z-index:-1) layer between the
+  // (transparent) section background and the content.
+  const renderBlock = (s: typeof steps[number], i: number) => (
+    <div
+      key={s.dataSection}
+      data-section={s.dataSection}
+      ref={(el) => { blockRefs.current[i] = el; }}
+      style={{ minWidth: 0 }}
+    >
+      {isMobile && (
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{ ...STEP_HEADING, fontFamily: 'var(--font-headline)' }}>{s.name}</div>
+          <p style={STEP_SUB}>{tagline}</p>
+        </div>
+      )}
+      <Reveal delay={90}>
+        <h2 style={STEP_HEADING}>
+          <span style={{ fontFamily: 'var(--font-headline)' }}>{s.verb}</span>
+          <span style={{ fontFamily: 'var(--font-body)' }}>{s.method}</span>
+        </h2>
+        {s.rightSub ? <p style={STEP_SUB}>{s.rightSub}</p> : null}
+      </Reveal>
+      <div style={{ marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>{s.visual}</div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <section style={{ ...SECTION, position: 'relative', display: 'flex', flexDirection: 'column', gap: 'var(--space-10)' }}>
+        {steps.map(renderBlock)}
+        {/* release sentinel — END of _stepThree (particle un-pins here, before "who") */}
+        <div data-particle-release="true" aria-hidden="true" />
+      </section>
+    );
+  }
+
+  // NOTE: no `overflow:hidden` here — it would turn the section into a scroll
+  // container and break the left column's position:sticky. The body clips any
+  // horizontal bleed (index.html: body { overflow-x:hidden }); the dense graph
+  // diagram scrolls inside its own overflow-x:auto wrapper.
   return (
-    <section data-section={dataSection} style={{ position: 'relative', overflow: 'hidden', ...SECTION }}>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
-        gap: isMobile ? 'var(--space-5)' : 'var(--space-8)', alignItems: 'start',
-        position: 'relative',
-      }}>
-        <Reveal>
-          <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
-          <p style={sub}>{tagline}</p>
-        </Reveal>
-        {/* Right column. The headline reveals, but the visual (`children`) is rendered
-            OUTSIDE the Reveal: Reveal uses `will-change: opacity, transform`, which
-            ALWAYS creates a stacking context — and that would trap the visual above the
-            scroll particle. Keeping the visual out of any stacking context lets the
-            particle (z-index:-1) layer between a section's background and its content. */}
-        <div style={{ minWidth: 0 }}>
-          <Reveal delay={90}>
-            <h2 style={heading}>
-              <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
-              <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
-            </h2>
-            {rightSub ? <p style={sub}>{rightSub}</p> : null}
-          </Reveal>
-          <div style={{ marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>{children}</div>
+    <section style={{ ...SECTION, position: 'relative' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 0.8fr) minmax(0, 2fr)', gap: 'var(--space-8)', position: 'relative' }}>
+        {/* shared pinned left column — sticky; its step name changes with scroll */}
+        <div>
+          <div style={{ position: 'sticky', top: '22vh' }}>
+            <div style={{ ...STEP_HEADING, fontFamily: 'var(--font-headline)' }}>{steps[active].name}</div>
+            <p style={STEP_SUB}>{tagline}</p>
+          </div>
+        </div>
+        {/* right column — the three step content blocks stacked */}
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
+          {steps.map(renderBlock)}
         </div>
       </div>
+      {/* release sentinel — END of _stepThree (particle un-pins here, before "who") */}
+      <div data-particle-release="true" aria-hidden="true" />
     </section>
   );
 }
@@ -532,10 +602,11 @@ function CtaPair({ onCta, style }: { onCta: (e: React.MouseEvent) => void; style
   );
 }
 
-// ───────────────── DiagnosticSection (Figma 55:2) ─────────────────
-// Flat "step one" diagnostic: header + a live interview mock (orb, transcript,
-// status chips). No switcher / tabs / state. Tokens only.
-function DiagnosticSection() {
+// ───────────────── DiagnosticVisual (Figma 55:2) ─────────────────
+// The "step one" deliverable: a live interview mock (window dots, session meta,
+// agent tag, transcript quote, controls). A flat grey panel — the scroll particle
+// now pins in the shared left column (see PinnedSteps), not under this card. Tokens only.
+function DiagnosticVisual() {
   const isMobile = useIsMobile();
   const d = COPY.diagnostic;
   const meta: CSSProperties = {
@@ -543,21 +614,12 @@ function DiagnosticSection() {
     lineHeight: 1.4, color: 'var(--color-text)',
   };
   return (
-    <StepSection dataSection="diagnostic" step={d.step} verb={d.verb} method={d.method} tagline={d.tagline}>
-      {/* Live interview mock — aligned under the "conduct" headline.
-          Layer order in this card (item 1): grey fill (z-index:-2) → the docked scroll
-          particle (z-index:-1) → this card content (normal flow, on top). The card is
-          position:relative but NOT a stacking context (no z-index/transform/opacity), so
-          the fill and the global particle resolve in the same root stacking context and
-          the particle slips between them. `data-particle-dock` is the dock target. */}
-      <div data-particle-dock="true" style={{
-        position: 'relative', borderRadius: 'var(--radius-md)',
+      <div style={{
+        background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
         padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
         display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
         minHeight: isMobile ? 'auto' : '30rem',
       }}>
-        {/* Opaque grey fill — BELOW the particle (z-index:-2). */}
-        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'var(--color-panel)', borderRadius: 'var(--radius-md)', zIndex: -2 }} />
         {/* header row: window dots · centred label+session · status */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -600,7 +662,6 @@ function DiagnosticSection() {
           </div>
         </div>
       </div>
-    </StepSection>
   );
 }
 
@@ -695,18 +756,7 @@ function GraphDiagram() {
   );
 }
 
-function ContextGraphSection() {
-  const g = COPY.graph;
-  // No static left-particle: the single hero particle pins to the left here (see Hero).
-  return (
-    <StepSection dataSection="graph" step={g.step} verb={g.verb} method={g.method}
-      tagline={COPY.diagnostic.tagline} rightSub={g.tagline}>
-      <GraphDiagram />
-    </StepSection>
-  );
-}
-
-// ───────────────── TransformDashboardSection (Figma 56:344 — _stepThree) ─────────
+// ───────────────── ExecDashboard (Figma 56:344 / 63:143 — _stepThree) ─────────
 // The "transform data into Dashboard" deliverable: a grey exec-dashboard card with a
 // tab bar (exec summary active), a left insight feed (assistant lines + action chips
 // + timestamps + an "ask anything" input) and a right KPI column. Tokens only;
@@ -796,18 +846,6 @@ function ExecDashboard() {
   );
 }
 
-function TransformDashboardSection() {
-  const d = COPY.dashboard;
-  // No static left-particle: the single hero particle stays pinned to the left through
-  // this section (see Hero), then releases at "Who it's for".
-  return (
-    <StepSection dataSection="dashboard" step={d.step} verb={d.verb} method={d.method}
-      tagline={d.tagline} rightSub={d.rightSub}>
-      <ExecDashboard />
-    </StepSection>
-  );
-}
-
 // ───────────────── Hero (Figma 33:78) ─────────────────
 // Full-bleed brand hero. Split "install / evolution" headline (GT Alpina
 // Typewriter), particle cloud centerpiece, lede + dual CTAs, credentials.
@@ -836,12 +874,13 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
     const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
     const smoothstep = (t: number) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-    // ── ONE continuous scroll journey ──
-    //   ① hero centre (large)  ② dock onto the diagnostic card  ③ rise to the graph's
-    //   upper-left  ④ PIN to the left through graph + dashboard  ⑤ release at "who".
+    // ── ONE continuous scroll journey (single element) ──
+    //   ① hero centre (large)  ② migrate to the shared left column + shrink
+    //   ③ PIN to the left across _stepOne → _stepTwo → _stepThree
+    //   ④ release at the END of _stepThree (so it never overruns "Who it's for").
     // Each phase yields a target viewport centre (vx, vy) + scale; we convert that to a
-    // transform. Visual centre = (vw/2 + tx, restY + ty); set tx,ty so it lands on the
-    // target. Anchors are read live from the DOM each frame, so it tracks layout/resize.
+    // transform. Visual centre Y (viewport) == vy. Anchors are read live from the DOM
+    // each frame, so it tracks layout/resize.
     const update = () => {
       raf = 0;
       const y = window.scrollY;
@@ -851,53 +890,41 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       const baseW = img.offsetWidth || 1;   // unscaled particle width
 
       const q = (sel: string) => document.querySelector(sel) as HTMLElement | null;
-      const dockEl = q('[data-particle-dock]');
-      const graphEl = q('[data-section="graph"]');
-      const releaseEl = q('[data-particle-release]');
-      const dr = dockEl?.getBoundingClientRect();
-      const dockDocY = dr ? dr.top + y + dr.height / 2 : restY + heroH;
-      const dockX = dr ? dr.left + dr.width / 2 : vw / 2;
-      const graphTop = graphEl ? graphEl.getBoundingClientRect().top + y : restY + heroH * 2;
-      const releaseTop = releaseEl ? releaseEl.getBoundingClientRect().top + y : graphTop + heroH * 2;
+      const stepsEl = q('[data-section="diagnostic"]');   // start of the pinned steps
+      const releaseEl = q('[data-particle-release]');      // end of _stepThree
+      const stepsTop = stepsEl ? stepsEl.getBoundingClientRect().top + y : restY + heroH;
+      const releaseTop = releaseEl ? releaseEl.getBoundingClientRect().top + y : stepsTop + heroH * 3;
 
-      const sDock = 0.46;                    // fits inside the diagnostic card
       const sPin = 0.40;                     // left-side size during the pin
-      const pinVY = vh * 0.34;               // upper area
+      const pinVY = vh * 0.30;               // upper-left area (near the sticky step label)
       // pinned centre-X: keep the (scaled) blob fully on-screen against the left rail.
       const pinVX = clamp(vw * 0.04 + (baseW * sPin) / 2, (baseW * sPin) / 2, vw * 0.5);
 
-      const B1 = heroH;                              // hero → dock
-      const B2 = Math.max(B1 + 1, graphTop);         // dock → upper-left (pin starts)
-      // pin ends as "who" arrives — release a touch before its top hits the viewport
-      // top so the blob has cleared by the time the section is centred.
-      const B3 = Math.max(B2 + 1, releaseTop - vh * 0.25);
+      // B1: hero centre → left pin (over the hero scroll-out). B3: release a little
+      // before the steps end so the blob has fully cleared the top by _stepThree's end.
+      const B1 = Math.max(1, stepsTop);
+      const B3 = Math.max(B1 + 1, releaseTop - vh * 0.7);
 
       let vx: number, vy: number, scale: number;
       if (y <= B1) {
-        const t = smoothstep(y / Math.max(1, B1));
-        vy = lerp(restY, dockDocY, t) - y;           // document-anchored interpolation
-        vx = lerp(vw / 2, dockX, t);
-        scale = lerp(1, sDock, t);
-      } else if (y <= B2) {
-        const t = smoothstep((y - B1) / (B2 - B1));
-        vy = lerp(dockDocY - y, pinVY, t);           // card (doc-anchored) → upper-left
-        vx = lerp(dockX, pinVX, t);
-        scale = lerp(sDock, sPin, t);
+        const t = smoothstep(y / B1);
+        vy = lerp(restY, pinVY, t);                  // hero centre (viewport) → pin
+        vx = lerp(vw / 2, pinVX, t);
+        scale = lerp(1, sPin, t);
       } else if (y <= B3) {
         vx = pinVX; vy = pinVY; scale = sPin;        // PINNED (fixed viewport position)
       } else {
-        vx = pinVX; vy = (B3 + pinVY) - y; scale = sPin; // released → scroll away
+        vx = pinVX; vy = (B3 + pinVY) - y; scale = sPin; // released → scroll away (off top)
       }
 
       const tx = vx - vw / 2;
       const ty = (y + vy) - restY;
       img.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
-      // Opacity: full in the hero (centrepiece, every viewport); once it docks/pins it
-      // fades to a width-driven backdrop level — faint on narrow viewports (where content
-      // stacks full-width over it), near-full on wide desktop (where the left rail has
-      // room). A smooth graceful degradation rather than a hard mobile/desktop switch.
+      // Opacity: full in the hero (centrepiece, every viewport); once pinned it fades to
+      // a width-driven backdrop level — faint on narrow viewports (where content stacks
+      // full-width over it), near-full on wide desktop. Graceful, not a hard breakpoint.
       const postOp = lerp(0.22, 1, smoothstep((vw - 600) / 600));
-      img.style.opacity = lerp(1, postOp, smoothstep(y / Math.max(1, B1))).toFixed(3);
+      img.style.opacity = lerp(1, postOp, smoothstep(y / B1)).toFixed(3);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
@@ -1101,17 +1128,13 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       {/* HERO (Figma 33:78) — full-bleed */}
       <Hero onCta={handleCta} />
 
-      {/* DIAGNOSTIC (Figma 55:2) */}
-      <DiagnosticSection />
+      {/* PINNED STEPS — _stepOne (diagnostic) → _stepTwo (graph) → _stepThree
+          (dashboard), sharing one sticky left column; the particle pins left across
+          all three and releases at the end of _stepThree. */}
+      <PinnedSteps />
 
-      {/* CONTEXT GRAPH (Figma 55:22) */}
-      <ContextGraphSection />
-
-      {/* TRANSFORM / EXEC DASHBOARD (Figma 56:344 — _stepThree) */}
-      <TransformDashboardSection />
-
-      {/* WHO IT'S FOR — the scroll particle releases (un-pins) when this section arrives */}
-      <section data-particle-release="true" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
+      {/* WHO IT'S FOR — the particle has already released by here (end of _stepThree) */}
+      <section style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
         <Reveal><SectionHead kicker={COPY.whoKicker} title={COPY.whoTitle} titleMaxW="24ch" /></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
           {COPY.who.map((w, i) => (
