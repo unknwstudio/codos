@@ -475,11 +475,21 @@ function DiagnosticSection() {
     <StepSection dataSection="diagnostic" step={d.step} verb={d.verb} method={d.method} tagline={d.tagline}>
       {/* Live interview mock — aligned under the "conduct" headline */}
       <div style={{
+        position: 'relative', overflow: 'hidden', isolation: 'isolate',
         background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
         padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
         display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
         minHeight: isMobile ? 'auto' : '30rem',
       }}>
+        {/* Particle blob — underlays the grey card: clipped within it and layered
+            behind the content (isolation:isolate scopes the z-index:-1 so it paints
+            above the grey fill but below every child). Standalone <img> (no ref /
+            data-hero-particles) ⇒ never collides with the hero particle's animation. */}
+        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
+          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+          width: 'clamp(240px, 62%, 480px)', height: 'auto', zIndex: -1,
+          opacity: 0.9, pointerEvents: 'none', userSelect: 'none',
+        }} />
         {/* header row: window dots · centred label+session · status */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -498,9 +508,9 @@ function DiagnosticSection() {
           </div>
         </div>
 
-        {/* orb + agent tag */}
+        {/* agent tag — centred over the particle backdrop (the orb is now the card
+            underlay above, so this region reads against the particle blob) */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-3)' }}>
-          <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ width: 'clamp(180px, 32vw, 360px)', height: 'auto', display: 'block', pointerEvents: 'none', userSelect: 'none' }} />
           <span style={{ ...meta, background: 'var(--color-panel-chip)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)' }}>{d.agentTag}</span>
         </div>
 

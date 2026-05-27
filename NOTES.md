@@ -355,3 +355,23 @@ goes through a token; any new value is added as a semantically-named token.
   and NOTES already records the particle PNG failing to paint in headless captures, so
   this was verified by geometry/derivation rather than a screenshot; flagged for the
   morning manual pass.
+
+## Item 4 — particles underlay diagnostic card
+
+- **What "it" was**: the diagnostic section's single particle blob rendered as an
+  inline centred orb inside the card's flex flow (an isolated focal image floating in
+  the card's empty middle). Moved that same instance to *underlay* the grey card.
+- **How**: the grey card is now `position: relative; overflow: hidden; isolation:
+  isolate`. The particle is an absolute, centred child with `z-index: -1`. Because the
+  card now forms its own stacking context, `z-index:-1` paints **above the grey fill
+  but below every content child** — so the blob sits *within* the grey card, behind
+  the header / agent tag / transcript / footer, and is clipped to the card (no longer
+  floating in the gap before it). Card content needed no z-index changes.
+- **No hero conflict**: this is a standalone `<img>` with no `ref` and no
+  `data-hero-particles`; the hero's scroll animation only ever targets its own element
+  by `ref`, so the two particle instances are fully independent.
+- Removed the now-redundant inline orb `<img>`; kept the "CODOS AI" agent tag, which
+  reads cleanly against the backdrop (it carries its own `--color-panel-chip` fill).
+- Sizing/styling token-driven (`clamp(240px,62%,480px)`, `--color-panel`, radii); the
+  one literal is `opacity: 0.9`, a presentational layer constant consistent with the
+  other particle instances (graph 0.95 / closing 0.55), not a themeable color/space.
