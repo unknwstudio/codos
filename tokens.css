@@ -132,7 +132,9 @@
   --bp-md: 760px;
   --bp-lg: 1080px;
   --page-max: 90rem;                          /* 1440px — wide cap, not a lock */
-  --page-gutter: clamp(1.25rem, 4vw, 4rem);   /* fluid page side padding */
+  /* Single page inset — the one left+right rail every section inherits.
+     Tightened 30% from the original clamp(1.25rem, 4vw, 4rem). */
+  --page-gutter: clamp(0.875rem, 2.8vw, 2.8rem); /* fluid page side padding */
   --section-y: clamp(3.5rem, 7vw, 7rem);      /* fluid section vertical rhythm */
 
   /* ============================================================

@@ -300,3 +300,23 @@ infographic with its connector paths):
 - **/ds updated**: a new **Motion** section listing the motion tokens with a live
   hover-button demo + a replayable scroll-reveal demo; ds.css transitions
   re-pointed at `--duration-fast`/`--ease-out` (no more hardcoded `0.15s ease`).
+
+---
+
+# Overnight polish pass — 2026-05-27 (items 1–10)
+
+One commit per numbered item; build + typecheck kept green after each. Every value
+goes through a token; any new value is added as a semantically-named token.
+
+## Item 1 — tighten global page inset by 30%
+
+- **Single token confirmed**: `--page-gutter` (tokens.css) is the one left+right rail.
+  `SECTION` (`padding: var(--section-y) var(--page-gutter)`) and `StepSection`
+  (spreads `SECTION`) drive every `<section>` from it; `S.inner` also references it.
+- Reduced it 30% across the whole fluid clamp (each stop × 0.7):
+  `clamp(1.25rem, 4vw, 4rem)` → `clamp(0.875rem, 2.8vw, 2.8rem)`. Kept as ONE token,
+  kept fluid — no per-section padding touched.
+- Verified: grepped all horizontal insets in `EditorialLanding.tsx`. Every
+  `<section>` resolves its left/right rail to `--page-gutter`. The **only** exception
+  is the hero, which still used `--space-5/--space-8` — that's item 2's target, not a
+  per-section override of the inset.
