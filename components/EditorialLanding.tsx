@@ -461,6 +461,34 @@ const Dot: React.FC<{ color: string }> = ({ color }) => (
   <span style={{ width: 10, height: 10, borderRadius: 'var(--radius-full)', background: color, display: 'inline-block', flexShrink: 0 }} />
 );
 
+// ───────────────── CtaPair ─────────────────
+// The shared primary + secondary CTA pair ("Book a demo" / "E-mail founders"),
+// used by the hero and the comparison section so they're literally the same
+// component with the same tokens. All values are tokens.
+const ctaBtnBase: CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)',
+  lineHeight: 1, textDecoration: 'none', cursor: 'pointer',
+  padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)',
+  border: 'var(--border-thin) solid transparent', whiteSpace: 'nowrap',
+};
+const ctaBtnFilled: CSSProperties = {
+  ...ctaBtnBase, background: 'var(--color-surface)', color: 'var(--color-text)',
+};
+const ctaBtnOutline: CSSProperties = {
+  ...ctaBtnBase, background: 'transparent', color: 'var(--color-text)',
+  borderColor: 'var(--color-border-strong)',
+};
+
+function CtaPair({ onCta, style }: { onCta: (e: React.MouseEvent) => void; style?: CSSProperties }) {
+  return (
+    <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', ...style }}>
+      <a href="#demo" onClick={onCta} className="lp-btn lp-btn--filled" style={ctaBtnFilled}>{COPY.ctaPrimary}</a>
+      <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={ctaBtnOutline}>{COPY.heroCtaSecondary}</a>
+    </div>
+  );
+}
+
 // ───────────────── DiagnosticSection (Figma 55:2) ─────────────────
 // Flat "step one" diagnostic: header + a live interview mock (orb, transcript,
 // status chips). No switcher / tabs / state. Tokens only.
@@ -711,21 +739,6 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
     letterSpacing: '-0.02em',
     margin: 0,
   };
-  const btnBase: CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)',
-    lineHeight: 1, textDecoration: 'none', cursor: 'pointer',
-    padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)',
-    border: 'var(--border-thin) solid transparent', whiteSpace: 'nowrap',
-  };
-  const btnFilled: CSSProperties = {
-    ...btnBase, background: 'var(--color-surface)', color: 'var(--color-text)',
-  };
-  const btnOutline: CSSProperties = {
-    ...btnBase, background: 'transparent', color: 'var(--color-text)',
-    borderColor: 'var(--color-border-strong)',
-  };
-
   return (
     <section
       ref={sectionRef}
@@ -804,10 +817,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
           }}>
             {COPY.heroLede}
           </p>
-          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-5)', flexWrap: 'wrap' }}>
-            <a href="#demo" onClick={onCta} className="lp-btn lp-btn--filled" style={btnFilled}>{COPY.ctaPrimary}</a>
-            <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={btnOutline}>{COPY.heroCtaSecondary}</a>
-          </div>
+          <CtaPair onCta={onCta} style={{ marginTop: 'var(--space-5)' }} />
         </div>
 
         {/* Credentials — partner / backer logos */}
@@ -893,6 +903,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
             </div>
           ))}
         </Panel></Reveal>
+        {/* Section CTA — same component + tokens as the hero's button pair */}
+        <Reveal delay={140}>
+          <CtaPair onCta={handleCta} style={{ marginTop: 'var(--space-6)' }} />
+        </Reveal>
       </section>
 
       {/* HOW IT WORKS */}

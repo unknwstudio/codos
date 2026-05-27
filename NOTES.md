@@ -410,3 +410,17 @@ goes through a token; any new value is added as a semantically-named token.
   the brief's `--color-success` already exists in tokens.css and is exposed in Tailwind.
   Chose the semantic success token over the brighter `--color-signal`/`--color-status-live`
   greens because the brief asked specifically for the success/positive green.
+
+## Item 7 — add CTA to comparison section
+
+- Extracted the hero's primary+secondary buttons into a module-level **`CtaPair`**
+  component (`Book a demo` filled + `E-mail founders` outline) backed by shared style
+  constants (`ctaBtnBase/Filled/Outline`), all token-driven, with the same `lp-btn`
+  hover hooks. The hero now renders `<CtaPair/>` too, so the comparison CTA is
+  *literally the same component with the same tokens* — exactly the consistency the
+  brief asked for, and a single place to evolve the pair.
+- Added `<CtaPair onCta={handleCta} />` at the END of the analysis/comparison section
+  (after the comparison panel, wrapped in a `Reveal` for the scroll-in), left-aligned
+  to the section rail.
+- Removed the now-redundant hero-local `btnBase/btnFilled/btnOutline`. Net: less code,
+  one source of truth for the CTA pair.
