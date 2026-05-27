@@ -593,3 +593,19 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
   the headline), and docked (glowing within the grey card). The graph + new dashboard
   sections keep their own decorative left-particles (separate, per Figma) — item 2 only
   concerned the hero↔diagnostic pair.
+
+## Item 3 — align team cards to the step-row grid column
+
+- Extracted the 01/02/03 "How it works" grid into shared constants `STEP_GRID_COLS`
+  (`repeat(3, 1fr)`) + `STEP_GRID_GAP` (`var(--space-4)`), and pointed the step row at
+  them — the canonical 3-column rail.
+- The team section now uses that exact grid (same cols + gap, same `SECTION`
+  full-bleed padding): the headline block sits in **column 1** (`grid-column: 1 / 2`),
+  the two member cards span **columns 2–3** (`grid-column: 2 / 4`) as an inner
+  `1fr 1fr` pair with the same `STEP_GRID_GAP`, so card A lands exactly on column 2's
+  left edge.
+- Verified by measuring live: step-row card 2, the team cards container, and team card
+  A all report `left = 499px` — pixel-exact alignment.
+- Mobile: the outer grid collapses to `1fr` and the explicit `grid-column` spans reset
+  to `auto`, so it stacks (headline → cards, cards 2-up → 1-up) with no implicit-column
+  blowout.

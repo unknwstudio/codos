@@ -323,7 +323,7 @@ function HowItWorksSection() {
   return (
     <section id="how" ref={ref} style={{ ...SECTION, overflow: 'hidden' }}>
       <Reveal><SectionHead kicker={COPY.howKicker} title={COPY.howTitle} titleMaxW="22ch" /></Reveal>
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : STEP_GRID_COLS, gap: STEP_GRID_GAP }}>
         {COPY.howSteps.map((s, i) => {
           const delay = i * 280;
           return (
@@ -373,6 +373,13 @@ function Chip({ children, tone = 'plain' }: { children: React.ReactNode; tone?: 
 // no max-width container; only body text keeps a readable measure.
 const SECTION: CSSProperties = { padding: 'var(--section-y) var(--page-gutter)' };
 const REG = 'var(--font-weight-regular)' as unknown as number;
+
+// The 01/02/03 "How it works" step-row grid — the canonical 3-column rail. The team
+// cards and the FAQ accordion lock their content onto it, starting at column 2's left
+// edge (grid-column 2 / 4). Shared so all three reference the SAME grid definition,
+// not each other (so one section's layout can change without breaking the others).
+const STEP_GRID_COLS = 'repeat(3, 1fr)';
+const STEP_GRID_GAP = 'var(--space-4)';
 
 // Shared section header — mono accent kicker + GT Alpina headline (+ optional sub).
 function SectionHead({ kicker, title, sub, center = false, titleMaxW }: {
@@ -1101,15 +1108,16 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       {/* HOW IT WORKS */}
       <HowItWorksSection />
 
-      {/* TEAM — headline (left) + member-card pair (right); stacks on mobile */}
+      {/* TEAM — headline in column 1 of the step-row grid, the member-card pair in
+          columns 2–3 (so the cards start exactly at CARD 2's left edge). Stacks on mobile. */}
       <section id="team" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
-          gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'start',
+          gridTemplateColumns: isMobile ? '1fr' : STEP_GRID_COLS,
+          gap: isMobile ? 'var(--space-6)' : STEP_GRID_GAP, alignItems: 'start',
         }}>
-          <Reveal><SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} titleMaxW="14ch" /></Reveal>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 'var(--space-4)', minWidth: 0 }}>
+          <Reveal style={{ gridColumn: isMobile ? 'auto' : '1 / 2' }}><SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} titleMaxW="14ch" /></Reveal>
+          <div style={{ gridColumn: isMobile ? 'auto' : '2 / 4', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: STEP_GRID_GAP, minWidth: 0 }}>
             {COPY.team.map((p, i) => {
               const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
               return (
