@@ -184,8 +184,11 @@ const COPY = {
 // ───────────────── STYLE TOKENS ─────────────────
 const S = {
   wrap: {
+    // Transparent: the page cream lives on <body> (the canvas). Keeping the wrap
+    // transparent lets the single scroll particle (z-index:-1) paint above the cream
+    // but below every section's content — the global "above bg, below text" rule.
     fontFamily: 'Urbanist, sans-serif',
-    background: 'var(--color-bg)',
+    background: 'transparent',
     color: 'var(--color-text)',
     minHeight: '100vh',
   } as CSSProperties,
@@ -468,20 +471,27 @@ function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVis
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
         gap: isMobile ? 'var(--space-5)' : 'var(--space-8)', alignItems: 'start',
-        position: 'relative', zIndex: 1,
+        position: 'relative',
       }}>
         <Reveal>
           <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{step}</div>
           <p style={sub}>{tagline}</p>
         </Reveal>
-        <Reveal delay={90} style={{ minWidth: 0 }}>
-          <h2 style={heading}>
-            <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
-            <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
-          </h2>
-          {rightSub ? <p style={sub}>{rightSub}</p> : null}
+        {/* Right column. The headline reveals, but the visual (`children`) is rendered
+            OUTSIDE the Reveal: Reveal uses `will-change: opacity, transform`, which
+            ALWAYS creates a stacking context — and that would trap the visual above the
+            scroll particle. Keeping the visual out of any stacking context lets the
+            particle (z-index:-1) layer between a section's background and its content. */}
+        <div style={{ minWidth: 0 }}>
+          <Reveal delay={90}>
+            <h2 style={heading}>
+              <span style={{ fontFamily: 'var(--font-headline)' }}>{verb}</span>
+              <span style={{ fontFamily: 'var(--font-body)' }}>{method}</span>
+            </h2>
+            {rightSub ? <p style={sub}>{rightSub}</p> : null}
+          </Reveal>
           <div style={{ marginTop: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>{children}</div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -535,18 +545,19 @@ function DiagnosticSection() {
   return (
     <StepSection dataSection="diagnostic" step={d.step} verb={d.verb} method={d.method} tagline={d.tagline}>
       {/* Live interview mock — aligned under the "conduct" headline.
-          The grey panel is translucent so the ONE hero particle, which docks behind
-          this card on scroll (see Hero), reads through it as the underlay glow. The
-          StepSection grid is its own stacking context (z-index:1), so the docked
-          particle (z-index:0) sits above the panel fill but below this content —
-          no separate/static particle element. `data-particle-dock` is the target the
-          hero scroll effect homes the particle onto. */}
+          Layer order in this card (item 1): grey fill (z-index:-2) → the docked scroll
+          particle (z-index:-1) → this card content (normal flow, on top). The card is
+          position:relative but NOT a stacking context (no z-index/transform/opacity), so
+          the fill and the global particle resolve in the same root stacking context and
+          the particle slips between them. `data-particle-dock` is the dock target. */}
       <div data-particle-dock="true" style={{
-        background: 'color-mix(in srgb, var(--color-panel) 72%, transparent)', borderRadius: 'var(--radius-md)',
+        position: 'relative', borderRadius: 'var(--radius-md)',
         padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
         display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
         minHeight: isMobile ? 'auto' : '30rem',
       }}>
+        {/* Opaque grey fill — BELOW the particle (z-index:-2). */}
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'var(--color-panel)', borderRadius: 'var(--radius-md)', zIndex: -2 }} />
         {/* header row: window dots · centred label+session · status */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -691,7 +702,7 @@ function ContextGraphSection() {
   // the hero animation targets its own element by ref, so there's no conflict.
   const particle = (
     <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
-      position: 'absolute', zIndex: 0, pointerEvents: 'none', userSelect: 'none',
+      position: 'absolute', zIndex: -1, pointerEvents: 'none', userSelect: 'none',
       left: isMobile ? '50%' : '0',
       top: isMobile ? '10%' : '50%',
       transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
@@ -798,7 +809,7 @@ function TransformDashboardSection() {
   // never collides with the hero particle's scroll animation.
   const particle = (
     <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
-      position: 'absolute', zIndex: 0, pointerEvents: 'none', userSelect: 'none',
+      position: 'absolute', zIndex: -1, pointerEvents: 'none', userSelect: 'none',
       left: isMobile ? '50%' : '0',
       top: isMobile ? '10%' : '50%',
       transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
@@ -894,7 +905,9 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         // hero and dock onto the diagnostic card on scroll. The particle width is
         // capped at ≤100vw, so nothing spills horizontally.
         position: 'relative', overflow: 'visible',
-        background: 'var(--color-bg)', color: 'var(--color-text)',
+        // Transparent: shows the body cream, so the z-index:-1 particle reads as the
+        // hero centrepiece (above the cream canvas, below the hero content).
+        background: 'transparent', color: 'var(--color-text)',
         minHeight: isMobile ? '92svh' : '100svh',
         display: 'flex', flexDirection: 'column',
         fontFamily: 'var(--font-body)',
@@ -940,7 +953,10 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
           position: 'absolute', left: '50%', top: '50%',
           transform: 'translate(-50%, -50%)', transformOrigin: 'center center', willChange: 'transform',
           width: isMobile ? '100%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
-          pointerEvents: 'none', userSelect: 'none', zIndex: 0,
+          // z-index:-1 → above the body cream canvas but below every section's content
+          // (which is in normal flow / positive z). The diagnostic grey fill is pushed
+          // to z-index:-2 so the particle sits between grey and the card's text.
+          pointerEvents: 'none', userSelect: 'none', zIndex: -1,
         }}
       />
 

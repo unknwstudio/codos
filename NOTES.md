@@ -635,3 +635,33 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
   (`clamp(17px,1.5vw,25px)`, +30% of the old `clamp(13px,1.15vw,19px)`) and
   `--logo-h-footer` (`21px`, +30% of `16px`), and pointed both `<img>`s at the tokens.
   Verified live: header logo 17→22px, footer 16→21px (~+30%).
+
+---
+
+# Third autonomous pass — 2026-05-27 (items 1–4: particles z-order, choreography, green, responsive)
+
+## Item 1 — particles z-order in diagnostic section
+
+- **Goal**: layer order in the diagnostic card = grey card bg → particles → card
+  text/controls (was: particle BEHIND a translucent card, i.e. below the grey).
+- **Root cause**: the particle was z-index:0 behind the `StepSection` grid (z-index:1,
+  a stacking context) and the card was translucent so it "showed through". To put the
+  particle ABOVE the grey but BELOW the text, the grey fill and the text must straddle
+  the particle in the SAME stacking context — impossible while ancestors create
+  stacking contexts that trap the whole card together.
+- **Architecture established** (foundation for items 1–2):
+  - Page cream lives on `<body>` (the canvas). Made `S.wrap` and the hero `background`
+    **transparent**, so the single particle at **z-index:-1** paints above the cream
+    canvas but below all in-flow/positive-z content.
+  - `StepSection` grid: removed its `z-index:1` (no longer a stacking context) and moved
+    the section **visual (`children`) OUT of the Reveal** — `Reveal` uses
+    `will-change: opacity, transform`, which *always* creates a stacking context and
+    would trap the visual above the particle. (Headline/step still reveal.)
+  - The graph + dashboard static left-particles moved to z-index:-1 too (kept correct
+    for this commit; removed in item 2).
+  - Diagnostic card: now `position: relative` (NOT a stacking context) with an **opaque
+    grey fill box at z-index:-2** and the content in normal flow. So: grey fill (−2) →
+    docked particle (−1) → card content (flow). The particle is vivid on the grey and
+    every label/badge/line/control reads on top.
+- Verified in-browser: hero centrepiece intact; diagnostic shows the particle above the
+  opaque grey with all text readable; graph/dashboard unaffected.
