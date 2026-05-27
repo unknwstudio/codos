@@ -87,6 +87,10 @@
   --text-body-sm: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem); --leading-body-sm: 1.55; /* → 14px */
   --text-label: clamp(0.8125rem, 0.75rem + 0.3vw, 0.9375rem);   --leading-label: 1.3;  /* uppercase eyebrow → 15px */
   --text-caption: 0.75rem;  --leading-caption: 1.45;          /* 12px, fixed */
+  /* Oversized display numeral — the exec-dashboard KPI values (Figma 63:143),
+     where the number is the dominant element of its column (~0.2× column width).
+     Fluid like the rest of the scale; the small unit ($/%) renders at ~0.32em. */
+  --text-metric: clamp(2.75rem, 1.2rem + 5vw, 5rem);  --leading-metric: 1;  /* → 80px */
 
   /* ---- Font weights ---- */
   --font-weight-thin: 100;
@@ -183,6 +187,7 @@
   --color-bg: var(--color-cream);
   --color-surface: var(--color-white);
   --color-surface-strong: var(--color-paper);
+  --color-surface-sunken: var(--color-ink-06);  /* faint inset tint on a panel (inactive dashboard tabs) */
   --color-text: var(--color-ink);
   --color-muted: var(--color-ink-soft);
   --color-faint: var(--color-ink-55);

@@ -714,7 +714,7 @@ function ExecDashboard() {
   const isMobile = useIsMobile();
   const d = COPY.dashboard;
   const tabBase: CSSProperties = {
-    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 1.2,
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 1.2,
     padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap',
   };
   const note: CSSProperties = {
@@ -733,50 +733,56 @@ function ExecDashboard() {
           {d.tabs.map((t, i) => (
             <span key={t} style={{
               ...tabBase,
-              background: i === 0 ? 'var(--color-highlight)' : 'transparent',
+              // exec summary (active) = brand highlight; the rest = a faint darker
+              // fill on the panel (Figma 63:143 shows subtle grey tab boxes).
+              background: i === 0 ? 'var(--color-highlight)' : 'var(--color-surface-sunken)',
               color: i === 0 ? 'var(--color-highlight-contrast)' : 'var(--color-text)',
             }}>{t}</span>
           ))}
         </div>
-        <span style={{ ...tabBase, border: 'var(--border-thin) solid var(--color-border-strong)', color: 'var(--color-text)' }}>{d.tabAction}</span>
+        {/* simulate — a separate action, on a light (white) chip at the right */}
+        <span style={{ ...tabBase, background: 'var(--color-panel-chip)', color: 'var(--color-text)' }}>{d.tabAction}</span>
       </div>
 
       {/* content — insight feed (left) + KPI column (right) */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'stretch' }}>
         {/* feed */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', minWidth: 0 }}>
           {d.feed.map((f) => (
-            <div key={f.text} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-text)' }}>{f.text}</p>
+            <div key={f.text} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-text)' }}>{f.text}</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
                 <Chip>{f.action}</Chip>
                 <span style={{ ...note, color: 'var(--color-faint)', flexShrink: 0 }}>{f.time}</span>
               </div>
             </div>
           ))}
-          {/* ask-anything input */}
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', background: 'var(--color-panel-chip)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-2) var(--space-3)' }}>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-faint)' }}>{d.inputPlaceholder}</span>
-            <Mic size={16} aria-hidden="true" style={{ color: 'var(--color-faint)', flexShrink: 0 }} />
+          {/* ask-anything — a borderless row sitting on a top divider (Figma: no fill box) */}
+          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', borderTop: 'var(--border-thin) solid var(--color-border-strong)', paddingTop: 'var(--space-4)' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: 'var(--color-faint)' }}>{d.inputPlaceholder}</span>
+            <Mic size={18} aria-hidden="true" style={{ color: 'var(--color-faint)', flexShrink: 0 }} />
           </div>
         </div>
 
         {/* KPI column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', minWidth: 0 }}>
-          {d.metrics.map((m, i) => (
+          {d.metrics.map((m) => (
             <div key={m.label} style={{
-              display: 'flex', flexDirection: 'column', gap: 'var(--space-1)',
-              borderTop: i > 0 ? 'var(--border-thin) solid var(--color-border-strong)' : 'none',
-              paddingTop: i > 0 ? 'var(--space-4)' : 0,
+              display: 'flex', flexDirection: 'column', gap: 'var(--space-2)',
+              // Every KPI block carries a top rule (Figma 63:143 — a hairline above
+              // each label, including the first).
+              borderTop: 'var(--border-thin) solid var(--color-border-strong)',
+              paddingTop: 'var(--space-4)',
             }}>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>{m.label}</span>
-              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 1, display: 'flex', alignItems: 'flex-start' }}>
-                {m.unitBefore && <span style={{ fontSize: '0.5em', marginTop: '0.15em' }}>{m.unit}</span>}
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 1.3, color: 'var(--color-text)' }}>{m.label}</span>
+              {/* oversized numeral; the $/% unit is a small superscript at the cap-top */}
+              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-metric)', lineHeight: 'var(--leading-metric)', display: 'flex', alignItems: 'flex-start' }}>
+                {m.unitBefore && <span style={{ fontSize: '0.32em', marginTop: '0.12em' }}>{m.unit}</span>}
                 <span>{m.value}</span>
-                {!m.unitBefore && <span style={{ fontSize: '0.5em', marginTop: '0.15em' }}>{m.unit}</span>}
+                {!m.unitBefore && <span style={{ fontSize: '0.32em', marginTop: '0.12em' }}>{m.unit}</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'baseline' }}>
-                {m.delta && <span style={{ ...note, color: 'var(--color-success)' }}>{m.delta}</span>}
+                {m.delta && <span style={note}>{m.delta}</span>}
                 <span style={note}>{m.notes[0]}</span>
               </div>
               {m.notes.slice(1).map((n) => <span key={n} style={note}>{n}</span>)}
