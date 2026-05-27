@@ -881,14 +881,14 @@ export default function EditorialLanding({ onCtaClick }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.4fr 1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-4) var(--space-6)', borderBottom: 'var(--border-thin) solid var(--color-border-strong)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
             {!isMobile && <div>Metric</div>}
             <div>Build it yourself</div>
-            <div style={{ color: 'var(--color-accent)' }}>With Codos</div>
+            <div style={{ color: 'var(--color-success)' }}>With Codos</div>
           </div>
           {COPY.compareRows.map((r) => (
             <div key={r.metric} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.4fr 1fr 1fr', gap: 'var(--space-4)', padding: 'var(--space-5) var(--space-6)', borderBottom: 'var(--border-thin) solid var(--color-border)', alignItems: 'center' }}>
               <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.15, marginBottom: isMobile ? 'var(--space-2)' : 0 }}>{r.metric}</div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-muted)', textDecoration: 'line-through', textDecorationColor: 'var(--color-border-strong)' }}>{r.diy}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-muted)' }}>{r.diy}</div>
               <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <Dot color="var(--color-accent)" />{r.codos}
+                <Dot color="var(--color-success)" />{r.codos}
               </div>
             </div>
           ))}

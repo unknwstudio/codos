@@ -398,3 +398,15 @@ goes through a token; any new value is added as a semantically-named token.
   SVG, no new dependency, no canvas. Styling token-driven (`--color-border-strong`,
   `--color-panel`, `--color-highlight`, cqw sizes). Node heights (111/120) match the
   Figma tiers and the cqw-scaled content fits within them at the min-width and up.
+
+## Item 6 — comparison table fixes
+
+- **Strikethrough removed**: the "Build it yourself" column dropped
+  `textDecoration: line-through` (+ its `textDecorationColor`). The DIY values are now
+  plain `--color-muted` text — present as the weaker option without being crossed out.
+- **Codos column → green**: both the "WITH CODOS" header and the row dot markers
+  changed from `--color-accent` (orange) to **`--color-success`** — the existing
+  semantic positive-green token (`--color-success-ink` `#2c5a44`). No new token needed;
+  the brief's `--color-success` already exists in tokens.css and is exposed in Tailwind.
+  Chose the semantic success token over the brighter `--color-signal`/`--color-status-live`
+  greens because the brief asked specifically for the success/positive green.
