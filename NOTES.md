@@ -424,3 +424,16 @@ goes through a token; any new value is added as a semantically-named token.
   to the section rail.
 - Removed the now-redundant hero-local `btnBase/btnFilled/btnOutline`. Net: less code,
   one source of truth for the CTA pair.
+
+## Item 8 — team section to left/right layout
+
+- Was: centred `SectionHead` stacked above a centred `max-width:64rem` 2-card grid.
+- Now: an outer two-column grid — **headline block (TEAM eyebrow + "McKinsey meets AI
+  lab.") on the LEFT**, the **two member cards as a pair on the RIGHT**. Reused the same
+  column ratio as `StepSection` (`minmax(0,0.8fr) minmax(0,2fr)`) so the team section
+  lines up with the diagnostic/graph rhythm.
+- `SectionHead` switched from `center` to left-aligned (default); `titleMaxW="14ch"`
+  gives the headline a tidy wrap in the narrow left column.
+- Responsive: on mobile the outer grid collapses to one column (headline then cards)
+  and the right-hand card pair itself drops from 2-up to 1-up. Card markup/tokens
+  unchanged. `minWidth: 0` on the cards column prevents grid overflow.

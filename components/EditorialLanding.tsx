@@ -912,29 +912,35 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       {/* HOW IT WORKS */}
       <HowItWorksSection />
 
-      {/* TEAM */}
+      {/* TEAM — headline (left) + member-card pair (right); stacks on mobile */}
       <section id="team" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
-        <Reveal><SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} center titleMaxW="20ch" /></Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 'var(--space-4)', maxWidth: '64rem', margin: '0 auto' }}>
-          {COPY.team.map((p, i) => {
-            const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
-            return (
-              <Reveal key={p.name} delay={i * 100}>
-              <Panel hover style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box', height: '100%' }}>
-                <div style={{ aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-panel-chip)' }}>
-                  <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
-                </div>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{p.name}</div>
-                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-accent)', marginTop: 'var(--space-2)' }}>{p.role}</div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                  {p.bio.map((b, j) => <div key={j} style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-muted)' }}>{b}</div>)}
-                </div>
-              </Panel>
-              </Reveal>
-            );
-          })}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
+          gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'start',
+        }}>
+          <Reveal><SectionHead kicker={COPY.teamKicker} title={COPY.teamTitle} titleMaxW="14ch" /></Reveal>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 'var(--space-4)', minWidth: 0 }}>
+            {COPY.team.map((p, i) => {
+              const photo = p.name.startsWith('Dima') ? '/assets/founder-1.png' : '/assets/founder-2.png';
+              return (
+                <Reveal key={p.name} delay={i * 100} style={{ height: '100%' }}>
+                <Panel hover style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box', height: '100%' }}>
+                  <div style={{ aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-panel-chip)' }}>
+                    <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{p.name}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-accent)', marginTop: 'var(--space-2)' }}>{p.role}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                    {p.bio.map((b, j) => <div key={j} style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-muted)' }}>{b}</div>)}
+                  </div>
+                </Panel>
+                </Reveal>
+              );
+            })}
+          </div>
         </div>
       </section>
 
