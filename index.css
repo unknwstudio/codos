@@ -36,6 +36,14 @@
 }
 .lp-link:hover { color: var(--color-accent); }
 
+/* Links sitting ON the orange section (footer) — accent-on-accent would vanish, so
+   these are ink and dim on hover instead. */
+.lp-link--on-accent {
+  color: var(--color-text);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.lp-link--on-accent:hover { opacity: 0.6; }
+
 /* FAQ rows (legacy native <details> — kept harmless) */
 .lp-faq > summary { transition: color var(--duration-fast) var(--ease-out); }
 .lp-faq[open] > summary,

@@ -906,7 +906,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: `var(--space-5) ${gutter}`,
       }}>
-        <img src={LOGO_SRC} alt="Codos" style={{ height: 'clamp(13px, 1.15vw, 19px)', width: 'auto', display: 'block' }} />
+        <img src={LOGO_SRC} alt="Codos" style={{ height: 'var(--logo-h-header)', width: 'auto', display: 'block' }} />
         <nav style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-6)', fontSize: 'var(--text-body-sm)' }}>
           {!isMobile && COPY.nav.map((n) => (
             <a key={n.label} href={n.href} className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{n.label}</a>
@@ -1176,16 +1176,18 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </Reveal>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ ...SECTION, paddingTop: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 'var(--space-3)' : 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-muted)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-          <img src={LOGO_SRC} alt="Codos" style={{ height: 16, width: 'auto', display: 'block' }} />
+      {/* FOOTER — continues the orange of the closing CTA (one unbroken orange block,
+          no cream strip beneath). Ink text/links for contrast on the orange. */}
+      <footer style={{ ...SECTION, background: 'var(--color-accent)', color: 'var(--color-text)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 'var(--space-4)' : 'var(--space-6)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <img src={LOGO_SRC} alt="Codos" style={{ height: 'var(--logo-h-footer)', width: 'auto', display: 'block' }} />
           <span>© {new Date().getFullYear()} Codos, Inc.</span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
-          <a href="#" className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Privacy</a>
-          <a href="#" className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>Terms</a>
-          <a href={`mailto:${COPY.founderEmail}`} className="lp-link" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>{COPY.founderEmail}</a>
+        <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap', alignItems: 'center' }}>
+          <a href="#" className="lp-link--on-accent" style={{ textDecoration: 'none' }}>Privacy</a>
+          <a href="#" className="lp-link--on-accent" style={{ textDecoration: 'none' }}>Terms</a>
+          <a href={`mailto:${COPY.founderEmail}`} className="lp-link--on-accent" style={{ textDecoration: 'none' }}>{COPY.founderEmail}</a>
+          <a href="https://unknw.com" target="_blank" rel="noopener noreferrer" className="lp-link--on-accent" style={{ textDecoration: 'none' }}>designed by UNKNW</a>
         </div>
       </footer>
     </div>

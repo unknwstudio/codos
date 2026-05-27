@@ -117,6 +117,11 @@
   /* ---- Border widths ---- */
   --border-thin: 1px;
 
+  /* ---- Brand logo heights (header + footer) ----
+     +30% from the originals (header clamp 13/1.15vw/19px; footer 16px). */
+  --logo-h-header: clamp(17px, 1.5vw, 25px);
+  --logo-h-footer: 21px;
+
   /* ---- Motion ---- centralized easing + durations for transitions/reveals */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);

@@ -619,3 +619,19 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
   grid (team's layout can change without moving FAQ).
 - Verified live: step-row card 2 = team cards = FAQ accordion all at `left = 499px`.
 - Mobile stacks (single column; `grid-column` → `auto`).
+
+## Item 5 — orange footer, UNKNW credit, larger logo
+
+- **Continuous orange**: the `<footer>` now has `background: var(--color-accent)` (was
+  cream/transparent with `paddingTop:0`), so the closing CTA section + footer read as
+  one unbroken orange block with no cream strip beneath. Footer text → ink
+  (`--color-text`) for contrast on orange; footer links use a new `.lp-link--on-accent`
+  hook (ink, dims on hover) since the normal `.lp-link` hover→accent would vanish on
+  the orange.
+- **UNKNW credit**: added `designed by UNKNW` to the footer link row, linking to
+  `https://unknw.com` with `target="_blank"` + `rel="noopener noreferrer"` (new tab).
+- **Logo +30% (header + footer)**: this was the part skipped last run. Tokenised the
+  logo heights (they were hardcoded px clamps) into `--logo-h-header`
+  (`clamp(17px,1.5vw,25px)`, +30% of the old `clamp(13px,1.15vw,19px)`) and
+  `--logo-h-footer` (`21px`, +30% of `16px`), and pointed both `<img>`s at the tokens.
+  Verified live: header logo 17→22px, footer 16→21px (~+30%).
