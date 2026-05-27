@@ -467,9 +467,22 @@ const STEP_SUB: CSSProperties = {
 };
 
 function PinnedSteps() {
-  const isMobile = useIsMobile();
+  // The shared sticky left column needs real width for the big "_stepN" label beside
+  // the content, so the pinned layout is a wide-desktop feature (>= --bp-lg 1080px);
+  // below that it stacks (per-block labels) — graceful tablet/mobile degradation.
+  const isMobile = useIsMobile(1080);
+  // Headline stays --text-h1 down to small phones (it fits at full width >= ~480px);
+  // only the tightest phones (< --bp-sm 480) drop a notch so the long unbreakable
+  // method tokens (e.g. "diagnostic.Interviews") fit. break-word is the final guard.
+  const headingTiny = useIsMobile(480);
   const [active, setActive] = useState(0);
   const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const heading: CSSProperties = {
+    ...STEP_HEADING,
+    fontSize: headingTiny ? 'var(--text-h2)' : 'var(--text-h1)',
+    overflowWrap: 'break-word',
+  };
 
   const steps = [
     { name: COPY.diagnostic.step, verb: COPY.diagnostic.verb, method: COPY.diagnostic.method, rightSub: undefined as string | undefined, dataSection: 'diagnostic', visual: <DiagnosticVisual /> },
@@ -517,12 +530,12 @@ function PinnedSteps() {
     >
       {isMobile && (
         <div style={{ marginBottom: 'var(--space-5)' }}>
-          <div style={{ ...STEP_HEADING, fontFamily: 'var(--font-headline)' }}>{s.name}</div>
+          <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{s.name}</div>
           <p style={STEP_SUB}>{tagline}</p>
         </div>
       )}
       <Reveal delay={90}>
-        <h2 style={STEP_HEADING}>
+        <h2 style={heading}>
           <span style={{ fontFamily: 'var(--font-headline)' }}>{s.verb}</span>
           <span style={{ fontFamily: 'var(--font-body)' }}>{s.method}</span>
         </h2>
@@ -552,7 +565,7 @@ function PinnedSteps() {
         {/* shared pinned left column — sticky; its step name changes with scroll */}
         <div>
           <div style={{ position: 'sticky', top: '22vh' }}>
-            <div style={{ ...STEP_HEADING, fontFamily: 'var(--font-headline)' }}>{steps[active].name}</div>
+            <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{steps[active].name}</div>
             <p style={STEP_SUB}>{tagline}</p>
           </div>
         </div>
@@ -920,10 +933,11 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       const tx = vx - vw / 2;
       const ty = (y + vy) - restY;
       img.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
-      // Opacity: full in the hero (centrepiece, every viewport); once pinned it fades to
-      // a width-driven backdrop level — faint on narrow viewports (where content stacks
-      // full-width over it), near-full on wide desktop. Graceful, not a hard breakpoint.
-      const postOp = lerp(0.22, 1, smoothstep((vw - 600) / 600));
+      // Opacity: full in the hero (centrepiece, every viewport). Once pinned, it's only
+      // prominent where the steps actually show a dedicated left column for it to live
+      // in (>= --bp-lg 1080, matching PinnedSteps); below that the layout has stacked
+      // full-width, so the pinned blob drops to a faint backdrop. Graceful degradation.
+      const postOp = vw < 1080 ? 0.18 : lerp(0.5, 1, smoothstep((vw - 1080) / 500));
       img.style.opacity = lerp(1, postOp, smoothstep(y / B1)).toFixed(3);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
