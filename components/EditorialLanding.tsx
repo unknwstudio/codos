@@ -302,52 +302,51 @@ function LogoPill({ label, dark = false }: { label: string; dark?: boolean }) {
   );
 }
 
-// ───────────────── How it works (sequential fly-in) ─────────────────
+// ───────────────── How it works — "from zero to running" staircase (Figma 63:221) ─────
+// A descending-right staircase: each step is a lengthening brand bar (Days → Weeks →
+// Months) over a "{time} of {name}" label (time in mono accent, name in serif) and a
+// body line. The growing bars + rightward march read as a ramp from zero to running.
+// Indents/bar-widths are proportional layout (like the graph diagram); all colours,
+// type, the bar height/radius and rhythm come from tokens. Bleeds off the right edge
+// (clipped by the section) on the last step, as in the design.
+const HOW_STEP_GEOM = [
+  { indent: '0%',  barW: '12%' },
+  { indent: '18%', barW: '31%' },
+  { indent: '50%', barW: '55%' },
+];
+
 function HowItWorksSection() {
-  const ref = useRef<HTMLElement | null>(null);
-  const [visible, setVisible] = useState(false);
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      });
-    }, { threshold: 0.25 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   return (
-    <section id="how" ref={ref} style={{ ...SECTION, overflow: 'hidden' }}>
+    <section id="how" style={{ ...SECTION, overflow: 'hidden' }}>
       <Reveal><SectionHead kicker={COPY.howKicker} title={COPY.howTitle} titleMaxW="22ch" /></Reveal>
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : STEP_GRID_COLS, gap: STEP_GRID_GAP }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 'var(--space-6)' : 'var(--space-8)' }}>
         {COPY.howSteps.map((s, i) => {
-          const delay = i * 280;
+          const g = HOW_STEP_GEOM[i] ?? HOW_STEP_GEOM[0];
           return (
-            <div
-              key={s.name}
-              style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(32px)',
-                transition: `opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms, transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}ms`,
-                willChange: 'transform, opacity',
-              }}
-            >
-              <Panel hover style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h2)', lineHeight: 1, color: 'var(--color-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
-                  <Chip>{s.time}</Chip>
-                </div>
-                <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{s.name}</div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{s.body}</div>
-              </Panel>
-            </div>
+            <Reveal key={s.name} delay={i * 120}>
+              {/* full-width step; the indent lives on each child so the bar width
+                  stays proportional to the full width (the last bar bleeds past the
+                  right edge, clipped by the section — as in the design). Flush-left
+                  and stacked on mobile. */}
+              {(() => {
+                const indent = isMobile ? '0%' : g.indent;
+                return (
+                  <div style={{ minWidth: 0 }}>
+                    {/* lengthening brand progress bar */}
+                    <div aria-hidden="true" style={{
+                      width: g.barW, marginLeft: indent, height: 'var(--space-3)',
+                      background: 'var(--color-accent)', borderRadius: 'var(--radius-full)',
+                    }} />
+                    <div style={{ marginLeft: indent, marginTop: 'var(--space-4)', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>
+                      <span style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)' }}>{s.time} of </span>
+                      <span>{s.name}</span>
+                    </div>
+                    <p style={{ marginLeft: indent, marginTop: 'var(--space-3)', marginRight: 0, marginBottom: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)', maxWidth: '40ch' }}>{s.body}</p>
+                  </div>
+                );
+              })()}
+            </Reveal>
           );
         })}
       </div>
