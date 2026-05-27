@@ -36,12 +36,33 @@
 }
 .lp-link:hover { color: var(--color-accent); }
 
-/* FAQ rows */
+/* FAQ rows (legacy native <details> — kept harmless) */
 .lp-faq > summary { transition: color var(--duration-fast) var(--ease-out); }
 .lp-faq[open] > summary,
 .lp-faq > summary:hover { color: var(--color-accent); }
 .lp-faq > summary .lp-faq-mark { transition: transform var(--duration-base) var(--ease-out); }
 .lp-faq[open] > summary .lp-faq-mark { transform: rotate(45deg); }
+
+/* Animated FAQ accordion (controlled; smooth open/close, no native snap).
+   The panel animates via grid-template-rows 0fr→1fr (clean height transition)
+   + opacity; its inner wrapper clips the overflow during the transition. */
+.lp-acc-summary { color: var(--color-text); transition: color var(--duration-fast) var(--ease-out); }
+.lp-acc-summary:hover,
+.lp-acc-summary[aria-expanded='true'] { color: var(--color-accent); }
+.lp-acc-mark { transition: transform var(--duration-base) var(--ease-out); }
+.lp-acc-mark[data-open='true'] { transform: rotate(45deg); }
+.lp-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--duration-base) var(--ease-out), opacity var(--duration-base) var(--ease-out);
+}
+.lp-acc-panel[data-open='true'] { grid-template-rows: 1fr; opacity: 1; }
+.lp-acc-panel > div { overflow: hidden; min-height: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-acc-summary, .lp-acc-mark, .lp-acc-panel { transition: none; }
+}
 
 /* Partner logos / cards lift */
 .lp-logo { transition: opacity var(--duration-base) var(--ease-out), filter var(--duration-base) var(--ease-out); }

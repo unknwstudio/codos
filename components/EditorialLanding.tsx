@@ -845,6 +845,45 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
   );
 }
 
+// ───────────────── FaqAccordion ─────────────────
+// Controlled accordion (replaces native <details>) so open/close can animate
+// smoothly (height via grid-template-rows + opacity, in index.css). One row open
+// at a time; first row open by default. Reduced-motion handled by the CSS hooks.
+function FaqAccordion() {
+  const [open, setOpen] = useState(0);
+  return (
+    <div>
+      {COPY.faq.map((f, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={f.q} style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              onClick={() => setOpen(isOpen ? -1 : i)}
+              className="lp-acc-summary"
+              style={{
+                width: '100%', appearance: 'none', background: 'none', border: 'none',
+                padding: 0, margin: 0, textAlign: 'left', cursor: 'pointer',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)',
+                fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.2,
+              }}
+            >
+              <span style={{ flex: 1 }}>{f.q}</span>
+              <span className="lp-acc-mark" data-open={isOpen} style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)', display: 'inline-block', flexShrink: 0 }}>+</span>
+            </button>
+            <div className="lp-acc-panel" data-open={isOpen}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)', marginTop: 'var(--space-3)', maxWidth: '48ch' }}>{f.a}</div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ───────────────── Editorial Landing (root) ─────────────────
 type Props = { onCtaClick?: () => void };
 
@@ -944,20 +983,18 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — headline (left) + animated accordion (right); stacks on mobile */}
       <section id="faq" style={SECTION}>
-        <Reveal><SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} center titleMaxW="18ch" /></Reveal>
-        <Reveal delay={90} style={{ maxWidth: '52rem', margin: '0 auto' }}>
-          {COPY.faq.map((f, i) => (
-            <details key={f.q} open={i === 0} className="lp-faq" style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
-              <summary style={{ listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)', cursor: 'pointer', fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h4)', lineHeight: 1.2 }}>
-                <span style={{ flex: 1 }}>{f.q}</span>
-                <span className="lp-faq-mark" style={{ fontFamily: 'var(--font-body)', color: 'var(--color-accent)', display: 'inline-block' }}>+</span>
-              </summary>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)', marginTop: 'var(--space-3)', maxWidth: '48ch' }}>{f.a}</div>
-            </details>
-          ))}
-        </Reveal>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
+          gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'start',
+        }}>
+          <Reveal><SectionHead kicker={COPY.faqKicker} title={COPY.faqTitle} titleMaxW="14ch" /></Reveal>
+          <Reveal delay={90} style={{ minWidth: 0 }}>
+            <FaqAccordion />
+          </Reveal>
+        </div>
       </section>
 
       {/* CLOSING CTA */}

@@ -437,3 +437,22 @@ goes through a token; any new value is added as a semantically-named token.
 - Responsive: on mobile the outer grid collapses to one column (headline then cards)
   and the right-hand card pair itself drops from 2-up to 1-up. Card markup/tokens
   unchanged. `minWidth: 0` on the cards column prevents grid overflow.
+
+## Item 9 — FAQ left/right layout + animated accordion
+
+- **Layout**: same left/right grid as the team section — headline (FAQ eyebrow +
+  "Questions founders ask.") on the LEFT, the accordion list on the RIGHT;
+  `minmax(0,0.8fr) minmax(0,2fr)`, collapsing to one column on mobile.
+- **Animated accordion**: replaced the native `<details>` (which snaps open) with a
+  controlled `FaqAccordion` (React state, one row open at a time, first open by
+  default). Open/close now animates smoothly:
+  - **height** via the `grid-template-rows: 0fr → 1fr` technique on `.lp-acc-panel`
+    (inner wrapper `overflow: hidden; min-height: 0` clips during the transition) —
+    no fixed/guessed max-height, animates to the content's true height.
+  - **opacity** 0 → 1 in parallel; the `+` mark rotates 45° to an `×`.
+  - timing from the motion tokens (`--duration-base`/`--ease-out`).
+- **prefers-reduced-motion**: an `@media (prefers-reduced-motion: reduce)` block in
+  index.css zeroes the transitions on `.lp-acc-summary/.lp-acc-mark/.lp-acc-panel`, so
+  it opens/closes instantly with no motion. State still toggles correctly.
+- A11y: the summary is now a real `<button type="button">` with `aria-expanded`.
+  The legacy `.lp-faq` CSS is left in place (now unused) — harmless.
