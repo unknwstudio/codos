@@ -1230,7 +1230,9 @@ export default function EditorialLanding({ onCtaClick }: Props) {
           dark ink (best contrast on this orange); the primary button is a dark fill
           (never orange-on-orange) so it reads clearly as a button. */}
       <section id="demo" style={{ ...SECTION, position: 'relative', overflow: 'hidden', background: 'var(--color-accent)', color: 'var(--color-text)' }}>
-        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', right: '-6%', top: '50%', transform: 'translateY(-50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
+        {/* particle — centred within the right-hand half of the section (centre of the
+            right zone = 75% across, 50% down), translated back by half its own size */}
+        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', left: '75%', top: '50%', transform: 'translate(-50%, -50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
         <Reveal>
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '36rem' }}>
             <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: 0, color: 'var(--color-text)' }}>
