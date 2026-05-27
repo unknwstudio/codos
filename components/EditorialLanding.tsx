@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Mic } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Editorial Landing — V2 from Claude Design handoff (Codos)
@@ -93,6 +94,28 @@ const COPY = {
       { kicker: 'vault', label: '.company', chips: ['stable facts'] },
       { kicker: 'vault', label: '.engagement', chips: ['operational record'] },
       { kicker: 'vault', label: '.working-memory', chips: ['synthesis & priorities'] },
+    ],
+  },
+
+  // Transform / exec-dashboard section (Figma 56:344 — _stepThree)
+  dashboard: {
+    step: '_stepThree',
+    verb: 'transform data into ',
+    method: 'Dashboard',
+    tagline: 'A listening agent — not a form.',
+    rightSub: 'Every signal, routed, deduped, written to record.',
+    tabs: ['exec summary', 'people', 'product', 'operations', 'market'],
+    tabAction: 'simulate',
+    feed: [
+      { text: "Sales headcount is up 18% but rev/employee is flat. You're paying for growth you're not getting.", action: 'Freeze Sales hiring', time: '14:21' },
+      { text: "Competitor Atlas shipped 2 features you've had in backlog since Q1. Context graph flagged 4 customer mentions this week.", action: 'Brief the team on Atlas', time: '14:21' },
+      { text: 'Pause the other 3 pilots until Token Coverage is fixed', action: 'Pause the other 3 pilots', time: '14:21' },
+    ],
+    inputPlaceholder: 'ask anything',
+    metrics: [
+      { label: 'revenue per employee', value: '415K', unit: '$', unitBefore: true, delta: '+$20K', notes: ['vs $480K last week'] },
+      { label: 'net margin', value: '18.2', unit: '%', unitBefore: false, notes: ['revenue $26.4M · OpEx $21.6M', 'OpEx grew 12% while revenue grew 9%.', 'net margin grew from 14.6%'] },
+      { label: 'Net revenue retention', value: '118', unit: '%', unitBefore: false, notes: ['ARR $58M, up from $49M. logo churn 2.1%/mo, but expansion revenue covers it 3×. signups are a vanity input; NRR is the outcome.'] },
     ],
   },
 
@@ -681,6 +704,113 @@ function ContextGraphSection() {
   );
 }
 
+// ───────────────── TransformDashboardSection (Figma 56:344 — _stepThree) ─────────
+// The "transform data into Dashboard" deliverable: a grey exec-dashboard card with a
+// tab bar (exec summary active), a left insight feed (assistant lines + action chips
+// + timestamps + an "ask anything" input) and a right KPI column. Tokens only;
+// headline = GT Alpina (--font-headline), all UI text = DM Mono (--font-body).
+function ExecDashboard() {
+  const isMobile = useIsMobile();
+  const d = COPY.dashboard;
+  const tabBase: CSSProperties = {
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 1.2,
+    padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap',
+  };
+  const note: CSSProperties = {
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+    lineHeight: 'var(--leading-caption)', color: 'var(--color-muted)',
+  };
+  return (
+    <div style={{
+      background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
+      padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
+      display: 'flex', flexDirection: 'column', gap: 'var(--space-5)',
+    }}>
+      {/* tab bar — exec summary (active, highlight) … + simulate (outlined, right) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          {d.tabs.map((t, i) => (
+            <span key={t} style={{
+              ...tabBase,
+              background: i === 0 ? 'var(--color-highlight)' : 'transparent',
+              color: i === 0 ? 'var(--color-highlight-contrast)' : 'var(--color-text)',
+            }}>{t}</span>
+          ))}
+        </div>
+        <span style={{ ...tabBase, border: 'var(--border-thin) solid var(--color-border-strong)', color: 'var(--color-text)' }}>{d.tabAction}</span>
+      </div>
+
+      {/* content — insight feed (left) + KPI column (right) */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'stretch' }}>
+        {/* feed */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', minWidth: 0 }}>
+          {d.feed.map((f) => (
+            <div key={f.text} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body-sm)', color: 'var(--color-text)' }}>{f.text}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
+                <Chip>{f.action}</Chip>
+                <span style={{ ...note, color: 'var(--color-faint)', flexShrink: 0 }}>{f.time}</span>
+              </div>
+            </div>
+          ))}
+          {/* ask-anything input */}
+          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', background: 'var(--color-panel-chip)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-2) var(--space-3)' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-faint)' }}>{d.inputPlaceholder}</span>
+            <Mic size={16} aria-hidden="true" style={{ color: 'var(--color-faint)', flexShrink: 0 }} />
+          </div>
+        </div>
+
+        {/* KPI column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', minWidth: 0 }}>
+          {d.metrics.map((m, i) => (
+            <div key={m.label} style={{
+              display: 'flex', flexDirection: 'column', gap: 'var(--space-1)',
+              borderTop: i > 0 ? 'var(--border-thin) solid var(--color-border-strong)' : 'none',
+              paddingTop: i > 0 ? 'var(--space-4)' : 0,
+            }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>{m.label}</span>
+              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 1, display: 'flex', alignItems: 'flex-start' }}>
+                {m.unitBefore && <span style={{ fontSize: '0.5em', marginTop: '0.15em' }}>{m.unit}</span>}
+                <span>{m.value}</span>
+                {!m.unitBefore && <span style={{ fontSize: '0.5em', marginTop: '0.15em' }}>{m.unit}</span>}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'baseline' }}>
+                {m.delta && <span style={{ ...note, color: 'var(--color-success)' }}>{m.delta}</span>}
+                <span style={note}>{m.notes[0]}</span>
+              </div>
+              {m.notes.slice(1).map((n) => <span key={n} style={note}>{n}</span>)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransformDashboardSection() {
+  const isMobile = useIsMobile();
+  const d = COPY.dashboard;
+  // particle 1 — LEFT side, matching the graph section's decorative blob (Figma
+  // frame 56:344 includes "particles 1" at x=-18). Standalone <img>, no ref, so it
+  // never collides with the hero particle's scroll animation.
+  const particle = (
+    <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
+      position: 'absolute', zIndex: 0, pointerEvents: 'none', userSelect: 'none',
+      left: isMobile ? '50%' : '0',
+      top: isMobile ? '10%' : '50%',
+      transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
+      width: isMobile ? '74%' : 'clamp(12rem, 22vw, 22rem)', height: 'auto',
+      opacity: isMobile ? 0.16 : 0.95,
+    }} />
+  );
+  return (
+    <StepSection dataSection="dashboard" step={d.step} verb={d.verb} method={d.method}
+      tagline={d.tagline} rightSub={d.rightSub} bgVisual={particle}>
+      <ExecDashboard />
+    </StepSection>
+  );
+}
+
 // ───────────────── Hero (Figma 33:78) ─────────────────
 // Full-bleed brand hero. Split "install / evolution" headline (GT Alpina
 // Typewriter), particle cloud centerpiece, lede + dual CTAs, credentials.
@@ -909,6 +1039,9 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
       {/* CONTEXT GRAPH (Figma 55:22) */}
       <ContextGraphSection />
+
+      {/* TRANSFORM / EXEC DASHBOARD (Figma 56:344 — _stepThree) */}
+      <TransformDashboardSection />
 
       {/* WHO IT'S FOR */}
       <section style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>

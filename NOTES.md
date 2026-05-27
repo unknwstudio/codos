@@ -527,3 +527,38 @@ leaves the custom-font/particle-heavy middle sections unpainted (virtual-time de
 race) — so each section above was confirmed via an in-viewport capture at its scroll
 offset, where it paints reliably. A quick manual look on a real device is still worth
 doing, especially the truncated item-10 header/footer question.
+
+---
+
+# Second autonomous pass — 2026-05-27 (items 1–6)
+
+One commit per numbered item; build + `tsc --noEmit` green after each. Tokens only.
+Figma pulled from the local Dev Mode MCP at `127.0.0.1:3845/mcp` (metadata + screenshot;
+the `get_design_context` code path needs an allow-listed asset dir I can't grant from
+here, so I worked from the structural metadata + screenshot and mapped onto our tokens).
+
+## Item 1 — new exec dashboard section from Figma (node 56:344, `_stepThree`)
+
+- The Figma frame is literally labelled `_stepThree` "transform data into Dashboard" —
+  i.e. the THIRD step in the diagnostic → context-graph → transformation narrative, the
+  content the old "transformation" tab used to show. **Judgment call**: I added it as a
+  new third `StepSection` right after the context graph rather than replacing the graph
+  (the frame is a distinct `_stepThree`, not the `_stepTwo` graph; the graph stays). The
+  brief's "place it where the old context-graph / transformation section was" reads as
+  "in the steps region, as the transformation step" — which is exactly after the graph.
+- Built `ExecDashboard` + `TransformDashboardSection` reusing the shared `StepSection`
+  (so the `_stepThree` label / headline / sub / left-particle rhythm matches the other
+  steps). The grey card recreates the frame: a tab bar (`exec summary` active in
+  `--color-highlight` yellow, people/product/operations/market, `simulate` outlined
+  right), a left insight feed (3 assistant lines + action `Chip`s + timestamps + an
+  "ask anything" input with a lucide `Mic` icon), and a right KPI column (revenue/employee
+  $415K, net margin 18.2%, NRR 118% with their notes).
+- Fonts per brief: headline ("transform data into" + big KPI numerals) = `--font-headline`
+  (GT Alpina / "Browser"); all UI/body text = `--font-body` (DM Mono).
+- 100% token-driven: `--color-panel/-chip/-highlight/-highlight-contrast/-text/-muted/
+  -faint/-border-strong/-success`, `--space-*`, `--radius-*`, `--text-*`. No new token
+  needed. The mic uses `lucide-react` (existing dep) — no hand-coded/hardcoded SVG.
+- Copy taken verbatim from the frame's metadata. The left tagline + right sub are the
+  same lines the graph frame uses (the designer reused them); kept faithful, consistent
+  with the existing StepSection pattern.
+- Verified in a real browser (CDP in-viewport capture) — matches the frame.
