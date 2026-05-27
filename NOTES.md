@@ -375,3 +375,26 @@ goes through a token; any new value is added as a semantically-named token.
 - Sizing/styling token-driven (`clamp(240px,62%,480px)`, `--color-panel`, radii); the
   one literal is `opacity: 0.9`, a presentational layer constant consistent with the
   other particle instances (graph 0.95 / closing 0.55), not a themeable color/space.
+
+## Item 5 — data-driven node diagram with computed edge anchors
+
+- **Before**: connectors were hand-placed. Source→raw lines fanned from five *guessed*
+  x-values `[345,470,577,690,810]` that corresponded to nothing in the geometry; node
+  heights were never modelled (loose `Y` constants), so anchors only approximately met
+  the boxes.
+- **After**: one `N` table holds every node's full box geometry (`x,y,w,h`) in design
+  units + its content — the single source of truth. The boxes are rendered from it
+  (`pct(n)` → left/top/width/height) AND the edges are **computed** from it:
+  - `edges` is a list of `[parent, child]` relationships (data, not coordinates).
+  - each path runs `bottomMid(parent) → topMid(child)`, i.e. the exact midpoint of the
+    parent's bottom side to the midpoint of the child's top side.
+  - the SVG shares the node coordinate system (`viewBox 0 0 1153 777` +
+    `preserveAspectRatio="none"`), which maps 1:1 to the `%`-positioned boxes, so an
+    anchor at design `(x,y)` lands precisely on the box edge at that point.
+  Because the curve `M a C (a.x,my) (b.x,my) b` puts control points on the midline,
+  every connector is a clean, consistent vertical S-curve.
+- Result: lines stay attached to the correct box edges and will follow automatically if
+  a node's `x/y/w/h` changes — no second set of coordinates to keep in sync. Still pure
+  SVG, no new dependency, no canvas. Styling token-driven (`--color-border-strong`,
+  `--color-panel`, `--color-highlight`, cqw sizes). Node heights (111/120) match the
+  Figma tiers and the cqw-scaled content fits within them at the min-width and up.

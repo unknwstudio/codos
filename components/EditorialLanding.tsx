@@ -563,46 +563,64 @@ function GNode({ kicker, label, chips, highlight = false, style }: {
 }
 
 // The context-graph infographic (Figma 61:793, native 1153×777) as a fluid
-// composition: nodes positioned by % of the design box, branching connectors
-// drawn in an SVG sharing that coordinate system, everything sized in cqw so it
-// scales together. A min-width keeps text legible (the diagram scrolls on phones).
+// composition. DATA-DRIVEN: every node's box geometry lives in one `N` table
+// (design units); the diagram renders the boxes from it AND computes every
+// connector from the SAME geometry — each edge anchors to the midpoint of the
+// relevant box side (parent bottom → child top), so lines stay attached if a box
+// moves or resizes. The SVG shares the node coordinate system (viewBox 0 0 W H +
+// preserveAspectRatio="none"), and everything is sized in cqw so it scales as one
+// unit. A min-width keeps text legible (the diagram scrolls on phones).
+type GraphNode = { x: number; y: number; w: number; h: number; label: string; chips: string[]; kicker?: string; highlight?: boolean };
+
 function GraphDiagram() {
   const g = COPY.graph;
   const W = 1153, H = 777;
-  const pct = (x: number, y: number, w: number): CSSProperties =>
-    ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, width: `${(w / W) * 100}%` });
-  const Y = { srcBot: 111, rawTop: 162, rawBot: 273, obsTop: 324, obsBot: 444, judgeTop: 495, judgeBot: 606, vaultTop: 657 };
-  const obs = [{ x: 194, w: 156 }, { x: 356, w: 174 }, { x: 536, w: 218 }, { x: 760, w: 200 }];
-  const vault = [{ x: 0, w: 380 }, { x: 386, w: 380 }, { x: 772, w: 381 }];
-  const cx = (n: { x: number; w: number }) => n.x + n.w / 2;
-  const rawCx = 577, judgeCx = 577;
-  const curve = (x1: number, y1: number, x2: number, y2: number) => {
-    const my = (y1 + y2) / 2;
-    return `M ${x1} ${y1} C ${x1} ${my} ${x2} ${my} ${x2} ${y2}`;
+
+  // ── Single source of truth: node boxes in design units ──
+  const N: Record<string, GraphNode> = {
+    sources:    { x: 0,   y: 0,   w: 1153, h: 111, label: g.sources.label, chips: g.sources.chips },
+    raw:        { x: 453, y: 162, w: 248,  h: 111, label: g.rawData.label, chips: g.rawData.chips },
+    people:     { x: 194, y: 324, w: 156,  h: 120, ...g.observers[0] },
+    product:    { x: 356, y: 324, w: 174,  h: 120, ...g.observers[1] },
+    operations: { x: 536, y: 324, w: 218,  h: 120, ...g.observers[2] },
+    market:     { x: 760, y: 324, w: 200,  h: 120, ...g.observers[3] },
+    judge:      { x: 379, y: 495, w: 396,  h: 111, highlight: true, label: g.judge.label, chips: g.judge.chips },
+    vCompany:   { x: 0,   y: 657, w: 380,  h: 120, ...g.vaults[0] },
+    vEngage:    { x: 386, y: 657, w: 380,  h: 120, ...g.vaults[1] },
+    vWorking:   { x: 772, y: 657, w: 381,  h: 120, ...g.vaults[2] },
   };
-  const paths = [
-    ...[345, 470, 577, 690, 810].map((x) => curve(x, Y.srcBot, rawCx, Y.rawTop)),
-    ...obs.map((o) => curve(rawCx, Y.rawBot, cx(o), Y.obsTop)),
-    ...obs.map((o) => curve(cx(o), Y.obsBot, judgeCx, Y.judgeTop)),
-    ...vault.map((v) => curve(judgeCx, Y.judgeBot, cx(v), Y.vaultTop)),
+
+  // ── Edges: parent → child. Geometry (anchors) is COMPUTED, not hand-placed ──
+  const edges: [string, string][] = [
+    ['sources', 'raw'],
+    ['raw', 'people'], ['raw', 'product'], ['raw', 'operations'], ['raw', 'market'],
+    ['people', 'judge'], ['product', 'judge'], ['operations', 'judge'], ['market', 'judge'],
+    ['judge', 'vCompany'], ['judge', 'vEngage'], ['judge', 'vWorking'],
   ];
+  const bottomMid = (n: GraphNode) => ({ x: n.x + n.w / 2, y: n.y + n.h });
+  const topMid    = (n: GraphNode) => ({ x: n.x + n.w / 2, y: n.y });
+  // Smooth vertical S-curve between two anchor points (control points on the midline).
+  const curve = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+    const my = (a.y + b.y) / 2;
+    return `M ${a.x} ${a.y} C ${a.x} ${my} ${b.x} ${my} ${b.x} ${b.y}`;
+  };
+  const pct = (n: GraphNode): CSSProperties => ({
+    left: `${(n.x / W) * 100}%`, top: `${(n.y / H) * 100}%`,
+    width: `${(n.w / W) * 100}%`, height: `${(n.h / H) * 100}%`,
+  });
+
   return (
     <div style={{ width: '100%', overflowX: 'auto' }}>
       <div style={{ containerType: 'inline-size', position: 'relative', width: '100%', minWidth: '38rem', aspectRatio: `${W} / ${H}` }}>
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
-          {paths.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke="var(--color-border-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          {edges.map(([from, to]) => (
+            <path key={`${from}-${to}`} d={curve(bottomMid(N[from]), topMid(N[to]))}
+              fill="none" stroke="var(--color-border-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
           ))}
         </svg>
-        <GNode label={g.sources.label} chips={g.sources.chips} style={pct(0, 0, W)} />
-        <GNode label={g.rawData.label} chips={g.rawData.chips} style={pct(453, Y.rawTop, 248)} />
-        {g.observers.map((o, i) => (
-          <GNode key={o.label} kicker={o.kicker} label={o.label} chips={o.chips} style={pct(obs[i].x, Y.obsTop, obs[i].w)} />
-        ))}
-        <GNode label={g.judge.label} chips={g.judge.chips} highlight style={pct(379, Y.judgeTop, 396)} />
-        {g.vaults.map((v, i) => (
-          <GNode key={v.label} kicker={v.kicker} label={v.label} chips={v.chips} style={pct(vault[i].x, Y.vaultTop, vault[i].w)} />
+        {Object.entries(N).map(([id, n]) => (
+          <GNode key={id} kicker={n.kicker} label={n.label} chips={n.chips} highlight={n.highlight} style={pct(n)} />
         ))}
       </div>
     </div>
