@@ -495,3 +495,35 @@ All of this is one commit — easy to revert/adjust once the full instruction is
 - The "global header/footer" portion had no readable content. Left header (nav CTA is
   already accent orange — now consistent with the hero) and footer unchanged rather
   than guessing. Worth confirming the intended header/footer changes in the morning.
+
+---
+
+## Visual verification (this run)
+
+Build + `tsc --noEmit` were green after **every** commit. For the layout/colour items I
+also did a real-browser visual pass: served the production build (`vite preview`) and
+drove a headless Chrome over CDP (via the project's transitive `ws` dep — no new deps,
+nothing committed) for full-page + in-viewport captures. Confirmed:
+
+- **Hero** — split `install / evolution` headline, lede, and the **orange** "Book a
+  demo" + outline "E-mail founders" pair; particle vertically centred; `install`,
+  lede, buttons and the backers row all on one left rail (items 1, 2, 3, 10).
+- **Diagnostic** — particle now sits **within/behind the grey card** (clipped, behind
+  the CODOS-AI tag / transcript / controls); `_stepOne` aligns to the hero rail
+  (items 2, 4).
+- **Context graph** — connectors anchor cleanly to box-edge midpoints:
+  `.sources → .raw-data → 4 observers → company-merge-judge → vaults` (item 5).
+- **Comparison** — DIY column plain (no strikethrough); "WITH CODOS" header + dots
+  **green**; the **orange "Book a demo" + outline "E-mail founders"** CTA renders at
+  the section end (items 6, 7).
+- **Team** — headline left, two member cards right (item 8).
+- **FAQ** — headline left, accordion right; first row open with the `+`→`×` mark,
+  others closed (item 9).
+- **Closing CTA** — the **whole section is filled orange**, full-bleed, with the
+  particle on the right and a dark "Book a demo" button (item 10).
+
+Caveat (consistent with earlier notes): a single tall full-page headless capture
+leaves the custom-font/particle-heavy middle sections unpainted (virtual-time decode
+race) — so each section above was confirmed via an in-viewport capture at its scroll
+offset, where it paints reliably. A quick manual look on a real device is still worth
+doing, especially the truncated item-10 header/footer question.
