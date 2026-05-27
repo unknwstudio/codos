@@ -456,3 +456,40 @@ goes through a token; any new value is added as a semantically-named token.
   it opens/closes instantly with no motion. State still toggles correctly.
 - A11y: the summary is now a real `<button type="button">` with `aria-expanded`.
   The legacy `.lp-faq` CSS is left in place (now unused) — harmless.
+
+## Item 10 — final CTA section + hero button  ⚠️ INSTRUCTION TRUNCATED
+
+**Heads up for the morning**: the item-10 brief was cut off mid-sentence
+("…separately, the hero's 'Book a demo' button (current"), and its title also
+mentions "global header/footer" with no readable bullets. I implemented the two
+clearly-specified bullets in full, made a documented best-call on the truncated
+hero-button clause, and did **not** fabricate header/footer changes I couldn't read.
+All of this is one commit — easy to revert/adjust once the full instruction is known.
+
+**Specified & done:**
+- **Whole final-CTA section is now orange.** Was a black `theme-dark` rounded *card*
+  inside the section; now the entire `<section>` is filled `var(--color-accent)`
+  (full-bleed, like the hero), `theme-dark` and the rounded-card wrapper removed. The
+  particle blob **stays** (same right-anchored, vertically-centred placement, z-index 0
+  behind the content).
+- **Readable button on orange.** Headline + subhead switched to dark ink
+  (`--color-text`) — on this orange, dark text has far better contrast than cream/white
+  (~7:1 vs ~3:1). The primary "Book a demo" is a **dark fill** (`background:
+  --color-text`, `color: --color-bg`) — clearly a button, never orange-on-orange, per
+  the brief. Secondary "E-mail founders" is an outline with a full-ink border (visible
+  on orange).
+
+**Inferred (truncated) — flag for review:**
+- **Hero "Book a demo" button → brand accent orange.** The clause cut off at
+  "(current…". Given (a) the rest of item 10 is about button contrast/readability and
+  (b) the hero primary was a white (`--color-surface`) fill on the cream bg = genuinely
+  low-contrast/washed out, the most likely + most brand-coherent fix is to make it the
+  accent orange already used by the nav "Book a demo". Done via the shared `CtaPair`
+  (`--color-accent` fill + `--color-accent-contrast` text + `lp-btn--accent` hover), so
+  the hero and the comparison-section CTA stay identical (honours item 7). If the
+  intended change was different, only `ctaBtnFilled` + the one className need adjusting.
+
+**Not actionable (truncated):**
+- The "global header/footer" portion had no readable content. Left header (nav CTA is
+  already accent orange — now consistent with the hero) and footer unchanged rather
+  than guessing. Worth confirming the intended header/footer changes in the morning.

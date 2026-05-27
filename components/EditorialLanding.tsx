@@ -472,8 +472,11 @@ const ctaBtnBase: CSSProperties = {
   padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)',
   border: 'var(--border-thin) solid transparent', whiteSpace: 'nowrap',
 };
+// Primary = the brand accent (orange), matching the nav "Book a demo" CTA — a clear,
+// high-contrast primary action on the cream background (the old white-on-cream fill
+// read as washed out). Secondary = quiet outline.
 const ctaBtnFilled: CSSProperties = {
-  ...ctaBtnBase, background: 'var(--color-surface)', color: 'var(--color-text)',
+  ...ctaBtnBase, background: 'var(--color-accent)', color: 'var(--color-accent-contrast)',
 };
 const ctaBtnOutline: CSSProperties = {
   ...ctaBtnBase, background: 'transparent', color: 'var(--color-text)',
@@ -483,7 +486,7 @@ const ctaBtnOutline: CSSProperties = {
 function CtaPair({ onCta, style }: { onCta: (e: React.MouseEvent) => void; style?: CSSProperties }) {
   return (
     <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', ...style }}>
-      <a href="#demo" onClick={onCta} className="lp-btn lp-btn--filled" style={ctaBtnFilled}>{COPY.ctaPrimary}</a>
+      <a href="#demo" onClick={onCta} className="lp-btn lp-btn--accent" style={ctaBtnFilled}>{COPY.ctaPrimary}</a>
       <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={ctaBtnOutline}>{COPY.heroCtaSecondary}</a>
     </div>
   );
@@ -997,22 +1000,22 @@ export default function EditorialLanding({ onCtaClick }: Props) {
         </div>
       </section>
 
-      {/* CLOSING CTA */}
-      <section id="demo" style={SECTION}>
+      {/* CLOSING CTA — whole section filled brand orange (particles stay). Text is
+          dark ink (best contrast on this orange); the primary button is a dark fill
+          (never orange-on-orange) so it reads clearly as a button. */}
+      <section id="demo" style={{ ...SECTION, position: 'relative', overflow: 'hidden', background: 'var(--color-accent)', color: 'var(--color-text)' }}>
+        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', right: '-6%', top: '50%', transform: 'translateY(-50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
         <Reveal>
-        <div className="theme-dark" style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-bg)', color: 'var(--color-text)', borderRadius: 'var(--radius-xl)', padding: isMobile ? 'var(--space-8) var(--space-5)' : 'var(--space-12) var(--space-10)' }}>
-          <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', right: '-6%', top: '50%', transform: 'translateY(-50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '36rem' }}>
-            <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: 0, color: 'var(--color-text)' }}>
               Ready to run your business <span style={{ fontFamily: 'var(--font-body)' }}>like&nbsp;code?</span>
             </h2>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)', color: 'var(--color-muted)', margin: 'var(--space-5) 0 0' }}>{COPY.closingSub}</p>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)', color: 'var(--color-text)', margin: 'var(--space-5) 0 0' }}>{COPY.closingSub}</p>
             <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)', flexWrap: 'wrap' }}>
               <a href="#" onClick={handleCta} className="lp-btn lp-btn--filled" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-text)', color: 'var(--color-bg)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', textDecoration: 'none' }}>{COPY.ctaPrimary}</a>
-              <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={{ display: 'inline-flex', alignItems: 'center', background: 'transparent', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', border: 'var(--border-thin) solid var(--color-border-strong)', textDecoration: 'none' }}>{COPY.heroCtaSecondary}</a>
+              <a href={`mailto:${COPY.founderEmail}`} className="lp-btn lp-btn--outline" style={{ display: 'inline-flex', alignItems: 'center', background: 'transparent', color: 'var(--color-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)', lineHeight: 1, padding: 'var(--space-4) var(--space-6)', borderRadius: 'var(--radius-full)', border: 'var(--border-thin) solid var(--color-text)', textDecoration: 'none' }}>{COPY.heroCtaSecondary}</a>
             </div>
           </div>
-        </div>
         </Reveal>
       </section>
 
