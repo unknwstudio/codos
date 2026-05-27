@@ -761,3 +761,100 @@ the journey). (c) Removing the section visuals from the Reveal means cards/diagr
 longer fade-in (headlines still do) — a deliberate trade for correct particle layering.
 (d) `prefers-reduced-motion` leaves the particle as a static hero centrepiece (no
 dock/pin); the graph/dashboard then have no blob — acceptable static degradation.
+
+---
+
+# Overnight pass — Figma re-sync + pinned-scroll rebuild (9 commits)
+
+All work via the local Figma Dev Mode MCP (http://127.0.0.1:3845/mcp); the hosted
+claude.ai Figma server was access/rate-limited. Every value routed through tokens; new
+semantic tokens added where a value was genuinely new (listed below). Each item is one
+commit; build + typecheck were green after every commit. Verified visually in headless
+Chrome via CDP at widths 320 → 1920.
+
+## New tokens added (tokens.css)
+- `--text-metric` / `--leading-metric` — oversized KPI numeral for the exec dashboard.
+- `--color-surface-sunken` (= `--color-ink-06`) — faint inset tint for inactive tabs.
+
+## Commits
+
+1. **fix: re-sync exec dashboard with Figma** (`646aadd`) — re-implemented `ExecDashboard`
+   to Figma node 63:143. KPI numbers are now the dominant element (new `--text-metric`,
+   ~80px desktop) with the $/% as a small superscript; metric labels rendered
+   sentence-case (were uppercase+tracked); a hairline top rule above **every** KPI block
+   (incl. the first); "ask anything" is a borderless row on a top divider (was a filled
+   chip); inactive tabs use a faint sunken fill, "simulate" a light chip; the +$20K delta
+   is the muted note colour, **not** green (Figma shows it dark).
+
+2. **feat: locked-cursor + book-a-demo tooltip on dashboard tabs** (`3aef4aa`) — new
+   `.dash-tablock` hook (index.css, token-driven): the whole tab cluster shows a
+   not-allowed cursor (inherited by every tab) and a "book a demo" tooltip on hover.
+   Reduced-motion safe.
+
+3. **feat: new from-zero-to-running layout from Figma** (`ca07874`) — replaced the 3-card
+   How-it-works grid with the Figma 63:221 staircase: lengthening brand bars (Days →
+   Weeks → Months) over "{time} of {name}" labels (time in mono accent, name in serif),
+   marching down-and-right; the last bar bleeds off the right edge (clipped by the
+   section). Indents/bar-widths are proportional layout; height (`--space-3`), pill
+   radius, colour, type are tokens. Stacks flush-left on mobile.
+
+4. **feat: hero logos — Meta + McKinsey left larger, a16z right** (`97bbf6a`) — reworked
+   the "backed by builders from" row to Figma 33:78: Meta + McKinsey enlarged on the left,
+   the a16z Speedrun lockup pushed right via space-between; dropped cyber·Fund + Everclear
+   from this row. a16z asset captured from the reference node (its cream ground ≈ the hero
+   canvas, so it blends seamlessly).
+
+5. **feat: pinned stepOne-stepThree with scroll-synced titles** (`ee417bc`) — re-architected
+   diagnostic/graph/dashboard into one `PinnedSteps` component sharing a single
+   `position:sticky` left column whose step name swaps _stepOne → _stepTwo → _stepThree
+   in sync with the block at ~38% of the viewport (rAF scroll tracker, deterministic).
+   The single hero particle migrates from the hero centre into this column and stays
+   pinned-left across all three, releasing at the END of _stepThree (a sentinel) so it no
+   longer overruns "Who it's for". Single element, reduced-motion safe.
+
+6. **fix: capitalize stepOne-three section phrases** (`75d260a`) — Conduct
+   diagnostic.Interviews / Setting contexts.Graph / Transform data into Dashboard.
+
+7. **fix: center CTA particles in right half** (`84ce728`) — closing-CTA particle moved
+   from the bleeding edge to the centre of the right-hand half (left:75%, top:50%,
+   translated back by half its size).
+
+8. **fix: footer flush to page bottom** (`7ce47b4`) — the layout already ended exactly at
+   the footer (footer bottom == document scrollHeight); the cream strip was the overscroll
+   rubber-band revealing the cream canvas. Added `overscroll-behavior-y: none` so the page
+   can't bounce past its ends.
+
+9. **fix: full responsive audit across all sections** (`531b5ab`) — zero horizontal
+   overflow 320 → 1920. Step headlines drop to `--text-h2` below `--bp-sm` (480) + carry
+   `overflow-wrap:break-word` so the long unbreakable method tokens never clip. The
+   pinned sticky column became a wide-desktop feature (≥ `--bp-lg` 1080): below that the
+   steps stack with per-block labels (graceful tablet/mobile), and the particle's pinned
+   opacity tracks the same 1080 threshold (prominent only where a left column exists,
+   faint backdrop otherwise).
+
+## Judgment calls / deviations
+- **Dropped the diagnostic-card particle "dock"** (and its z-index:-2 fill hack). Item 5
+  asks for the particle "pinned left across all three"; the old centre-dock contradicted
+  that. The diagnostic card is now a flat grey panel; the particle pins in the shared
+  left column instead. This supersedes the previous pass's dock layering work.
+- **Kept the "HOW IT WORKS" eyebrow** on the from-zero section even though Figma 63:221
+  shows only the title — every other section carries an eyebrow, so dropping it would make
+  this the lone exception. The staircase (the actual redesign) matches the node.
+- **a16z logo is a raster PNG**, not SVG. The reference node is an imported TIF (no vector
+  to extract) and the Dev Mode asset-write dir isn't allowlisted, so the logo was captured
+  as a 342×48 PNG (cream ground matching the hero). It's the "a16z /speedrun" lockup
+  exactly as the reference shows.
+- **Step headline stays h1 on tablet** (≥480) rather than shrinking with the layout
+  breakpoint, to stay consistent with the other section titles; only the tightest phones
+  drop a notch.
+- **`PinnedSteps` section can't use `overflow:hidden`** — it would turn the section into a
+  scroll container and break the sticky column. The body's `overflow-x:hidden` clips any
+  horizontal bleed; the graph diagram scrolls inside its own `overflow-x:auto` wrapper.
+- **Exec-dashboard metric value** uses a fluid clamp token (`--text-metric`) rather than
+  container-query units — consistent with the rest of the type scale; it lands ≈ the
+  Figma proportion (~0.2× column width) at desktop.
+- **Reduced-motion**: the particle stays a static hero centrepiece (no migrate/pin); the
+  sticky step column + scroll-synced label still work (positioning + a label swap, not
+  motion). Acceptable static degradation.
+
+Build green + typecheck passing after the final commit. Nothing pushed — local only.
