@@ -320,3 +320,17 @@ goes through a token; any new value is added as a semantically-named token.
   `<section>` resolves its left/right rail to `--page-gutter`. The **only** exception
   is the hero, which still used `--space-5/--space-8` — that's item 2's target, not a
   per-section override of the inset.
+
+## Item 2 — align all sections to one left rail
+
+- **Root cause**: the hero set its own gutter `isMobile ? var(--space-5) : var(--space-8)`
+  (≈48px desktop) while every `<section>` used `--page-gutter` (a different, fluid
+  value). So the hero headline/body/buttons and the diagnostic `_stepOne` block sat
+  on two different left rails.
+- **Fix**: hero `gutter` now = `var(--page-gutter)` — the same single inset token.
+  The hero header, headline and lower-content blocks all reference `gutter`, so the
+  whole hero now shares the exact left/right rail of every section (and stays fluid,
+  since `--page-gutter` is itself a clamp).
+- Verified by construction: hero content box left = `--page-gutter`; `StepSection`'s
+  grid (no extra padding/margin) starts its first column — the `_stepOne` block — at
+  the section's `--page-gutter` left. Same token ⇒ same edge. One inset, no exceptions.

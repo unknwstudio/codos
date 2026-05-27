@@ -628,7 +628,10 @@ function ContextGraphSection() {
 // Every value comes from a token (var(--…)); no raw Figma px/hex.
 function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
   const isMobile = useIsMobile();
-  const gutter = isMobile ? 'var(--space-5)' : 'var(--space-8)';
+  // The hero shares the ONE global page inset every <section> uses (--page-gutter),
+  // so its left/right rail lines up exactly with the diagnostic "_stepOne" block,
+  // the comparison table, and every other section. No bespoke hero gutter.
+  const gutter = 'var(--page-gutter)';
 
   // ── Scroll-driven particle (Task 2) ──
   // As the hero scrolls into the next section the particle cloud drifts toward
