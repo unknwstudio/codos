@@ -15,13 +15,15 @@ const ACCENT = '#F26B1F';
 const PARTICLES_SRC = '/assets/figma/particles.png';
 const LOGO_SRC = '/assets/figma/logo.svg';
 
-// Partner / backer logos (real wordmarks from /assets/logo/). Union.svg = cyber·Fund.
-const PARTNER_LOGOS = [
-  { src: '/assets/logo/mckinsey.svg', alt: 'McKinsey & Co', h: 0.95 },
-  { src: '/assets/logo/meta.svg', alt: 'Meta', h: 0.78 },
-  { src: '/assets/logo/Union.svg', alt: 'cyber·Fund', h: 0.7 },
-  { src: '/assets/logo/everclear.svg', alt: 'Everclear', h: 0.85 },
+// Hero "backed by builders from" logos (Figma 33:78): Meta + McKinsey enlarged on
+// the LEFT, the a16z Speedrun lockup pushed to the RIGHT. Heights are multiples of
+// one base clamp — McKinsey (stacked 2-line) and a16z (wide) run taller than Meta.
+const HERO_LOGO_BASE = 'clamp(20px, 2vw, 30px)';
+const HERO_LOGOS_LEFT = [
+  { src: '/assets/logo/meta.svg', alt: 'Meta', h: 1.0 },
+  { src: '/assets/logo/mckinsey.svg', alt: 'McKinsey & Company', h: 1.55 },
 ];
+const HERO_LOGO_RIGHT = { src: '/assets/logo/a16z-speedrun.png', alt: 'a16z Speedrun', h: 1.5 };
 
 // ───────────────── Responsive helper ─────────────────
 function useIsMobile(breakpoint = 760) {
@@ -1010,7 +1012,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
           <CtaPair onCta={onCta} style={{ marginTop: 'var(--space-5)' }} />
         </div>
 
-        {/* Credentials — partner / backer logos */}
+        {/* Credentials — Meta + McKinsey on the left (enlarged), a16z on the right */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <span style={{
             fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
@@ -1018,16 +1020,24 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
           }}>
             Backed by builders from
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(var(--space-4), 3vw, var(--space-8))', flexWrap: 'wrap' }}>
-            {PARTNER_LOGOS.map((l) => (
-              <img
-                key={l.alt}
-                className="lp-logo"
-                src={l.src}
-                alt={l.alt}
-                style={{ height: `calc(${l.h} * clamp(16px, 1.7vw, 24px))`, width: 'auto', display: 'block', opacity: 0.72 }}
-              />
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'clamp(var(--space-5), 4vw, var(--space-10))', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(var(--space-5), 3vw, var(--space-8))', flexWrap: 'wrap' }}>
+              {HERO_LOGOS_LEFT.map((l) => (
+                <img
+                  key={l.alt}
+                  className="lp-logo"
+                  src={l.src}
+                  alt={l.alt}
+                  style={{ height: `calc(${l.h} * ${HERO_LOGO_BASE})`, width: 'auto', display: 'block', opacity: 0.72 }}
+                />
+              ))}
+            </div>
+            <img
+              className="lp-logo"
+              src={HERO_LOGO_RIGHT.src}
+              alt={HERO_LOGO_RIGHT.alt}
+              style={{ height: `calc(${HERO_LOGO_RIGHT.h} * ${HERO_LOGO_BASE})`, width: 'auto', display: 'block', opacity: 0.72 }}
+            />
           </div>
         </div>
       </div>
