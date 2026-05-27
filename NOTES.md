@@ -372,9 +372,11 @@ goes through a token; any new value is added as a semantically-named token.
   by `ref`, so the two particle instances are fully independent.
 - Removed the now-redundant inline orb `<img>`; kept the "CODOS AI" agent tag, which
   reads cleanly against the backdrop (it carries its own `--color-panel-chip` fill).
-- Sizing/styling token-driven (`clamp(240px,62%,480px)`, `--color-panel`, radii); the
-  one literal is `opacity: 0.9`, a presentational layer constant consistent with the
-  other particle instances (graph 0.95 / closing 0.55), not a themeable color/space.
+- Sizing/styling token-driven (`--color-panel`, radii); the particle size uses a rem
+  clamp (`clamp(15rem,62%,30rem)`) matching the file's other particle instances'
+  rem-clamp convention (closing `16–34rem`, graph `12–22rem`) — no raw px. The one
+  literal is `opacity: 0.9`, a presentational layer constant consistent with the other
+  particle instances (graph 0.95 / closing 0.55), not a themeable color/space value.
 
 ## Item 5 — data-driven node diagram with computed edge anchors
 

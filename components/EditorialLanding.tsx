@@ -518,7 +518,7 @@ function DiagnosticSection() {
             data-hero-particles) ⇒ never collides with the hero particle's animation. */}
         <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
           position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-          width: 'clamp(240px, 62%, 480px)', height: 'auto', zIndex: -1,
+          width: 'clamp(15rem, 62%, 30rem)', height: 'auto', zIndex: -1,
           opacity: 0.9, pointerEvents: 'none', userSelect: 'none',
         }} />
         {/* header row: window dots · centred label+session · status */}
