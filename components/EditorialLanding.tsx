@@ -727,8 +727,9 @@ function ExecDashboard() {
       padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
       display: 'flex', flexDirection: 'column', gap: 'var(--space-5)',
     }}>
-      {/* tab bar — exec summary (active, highlight) … + simulate (outlined, right) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+      {/* tab bar — exec summary (active, highlight) … + simulate (outlined, right).
+          The whole cluster is locked: not-allowed cursor + "book a demo" tooltip on hover. */}
+      <div className="dash-tablock" role="group" aria-label="Dashboard views — book a demo to access" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
           {d.tabs.map((t, i) => (
             <span key={t} style={{

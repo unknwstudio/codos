@@ -72,6 +72,32 @@
   .lp-acc-summary, .lp-acc-mark, .lp-acc-panel { transition: none; }
 }
 
+/* Dashboard tab cluster — locked. The tabs are a non-interactive product mock, so
+   the whole row shows a not-allowed cursor and reveals a "book a demo" tooltip on
+   hover. `cursor` is inherited, so every tab inside the row picks it up. Tokens only. */
+.dash-tablock { position: relative; cursor: not-allowed; }
+.dash-tablock::after {
+  content: 'book a demo';
+  position: absolute;
+  left: 50%; top: 0;
+  transform: translate(-50%, calc(-100% - var(--space-3)));
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-body);
+  font-size: var(--text-body-sm);
+  line-height: 1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+.dash-tablock:hover::after { opacity: 1; transform: translate(-50%, calc(-100% - var(--space-2))); }
+@media (prefers-reduced-motion: reduce) {
+  .dash-tablock::after { transition: opacity var(--duration-fast) var(--ease-out); }
+}
+
 /* Partner logos / cards lift */
 .lp-logo { transition: opacity var(--duration-base) var(--ease-out), filter var(--duration-base) var(--ease-out); }
 .lp-logo:hover { opacity: 1 !important; }
