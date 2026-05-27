@@ -527,23 +527,19 @@ function DiagnosticSection() {
   };
   return (
     <StepSection dataSection="diagnostic" step={d.step} verb={d.verb} method={d.method} tagline={d.tagline}>
-      {/* Live interview mock — aligned under the "conduct" headline */}
-      <div style={{
-        position: 'relative', overflow: 'hidden', isolation: 'isolate',
-        background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
+      {/* Live interview mock — aligned under the "conduct" headline.
+          The grey panel is translucent so the ONE hero particle, which docks behind
+          this card on scroll (see Hero), reads through it as the underlay glow. The
+          StepSection grid is its own stacking context (z-index:1), so the docked
+          particle (z-index:0) sits above the panel fill but below this content —
+          no separate/static particle element. `data-particle-dock` is the target the
+          hero scroll effect homes the particle onto. */}
+      <div data-particle-dock="true" style={{
+        background: 'color-mix(in srgb, var(--color-panel) 72%, transparent)', borderRadius: 'var(--radius-md)',
         padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
         display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
         minHeight: isMobile ? 'auto' : '30rem',
       }}>
-        {/* Particle blob — underlays the grey card: clipped within it and layered
-            behind the content (isolation:isolate scopes the z-index:-1 so it paints
-            above the grey fill but below every child). Standalone <img> (no ref /
-            data-hero-particles) ⇒ never collides with the hero particle's animation. */}
-        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
-          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-          width: 'clamp(15rem, 62%, 30rem)', height: 'auto', zIndex: -1,
-          opacity: 0.9, pointerEvents: 'none', userSelect: 'none',
-        }} />
         {/* header row: window dots · centred label+session · status */}
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -840,18 +836,28 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
     const update = () => {
       raf = 0;
       const heroH = sec.offsetHeight || 1;
-      // progress through the hero's exit (0 at top → 1 after one hero-height)
+      // Travel progress: 0 at hero top → 1 after one hero-height of scroll.
       const p = Math.min(1, Math.max(0, window.scrollY / heroH));
       const ease = smoothstep(p);
-      // With top:50% + translateY(-50%), the particle's rest visual centre sits at
-      // offsetTop (a transform-independent layout metric). After scrolling `heroH`
-      // that centre's viewport-Y is offsetTop - heroH; drift moves it to mid-viewport.
-      const naturalCenterAtEnd = img.offsetTop - heroH;
-      const drift = window.innerHeight / 2 - naturalCenterAtEnd; // → viewport centre
-      const ty = ease * drift;
-      const scale = 1 - 0.55 * ease;
-      // Preserve the -50% vertical-centring baseline; add the scroll drift on top.
-      img.style.transform = `translate(-50%, calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
+      // The single particle docks onto the diagnostic card. Its rest visual centre is
+      // (vw/2, offsetTop) — top:50% + translateY(-50%) puts the centre at offsetTop, a
+      // transform-independent layout metric. We drift it to the card's centre (document
+      // coords) and shrink it to fit inside the card, where it underlays the panel.
+      const vw = window.innerWidth;
+      const dock = document.querySelector('[data-particle-dock]') as HTMLElement | null;
+      const restCenterY = img.offsetTop;            // document Y of the rest centre
+      let targetCenterY = restCenterY + heroH;       // fallback: one hero down
+      let targetCenterX = vw / 2;
+      if (dock) {
+        const r = dock.getBoundingClientRect();
+        targetCenterY = r.top + window.scrollY + r.height / 2;
+        targetCenterX = r.left + r.width / 2;
+      }
+      const tx = ease * (targetCenterX - vw / 2);
+      const ty = ease * (targetCenterY - restCenterY);
+      const scale = 1 - 0.54 * ease;                 // → ~0.46, fits within the card
+      // Keep the −50%,−50% centring baseline; add the dock drift on top.
+      img.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
@@ -876,7 +882,11 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
     <section
       ref={sectionRef}
       style={{
-        position: 'relative', overflow: 'hidden',
+        // overflow visible (not hidden) so the full square particle cloud is never
+        // clipped at the hero edges, and so the single instance can travel out of the
+        // hero and dock onto the diagnostic card on scroll. The particle width is
+        // capped at ≤100vw, so nothing spills horizontally.
+        position: 'relative', overflow: 'visible',
         background: 'var(--color-bg)', color: 'var(--color-text)',
         minHeight: isMobile ? '92svh' : '100svh',
         display: 'flex', flexDirection: 'column',
@@ -915,11 +925,15 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         style={{
           // Strictly vertically centred in the hero viewport: top:50% anchors the
           // box's mid-line, translate(-50%,-50%) pulls it back by half its own size.
-          // The scroll effect keeps the -50% baseline and only adds drift on top.
+          // The scroll effect keeps the -50% baseline and adds the dock drift on top.
+          // z-index:0 keeps it above the hero's fill but below the hero content AND
+          // below the diagnostic card (StepSection grid is z-index:1), so when it
+          // docks it underlays that translucent grey card. Width ≤100% (never wider
+          // than the viewport) so the un-clipped hero can't trigger horizontal scroll.
           position: 'absolute', left: '50%', top: '50%',
           transform: 'translate(-50%, -50%)', transformOrigin: 'center center', willChange: 'transform',
-          width: isMobile ? '124%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
-          pointerEvents: 'none', userSelect: 'none', zIndex: 1,
+          width: isMobile ? '100%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
+          pointerEvents: 'none', userSelect: 'none', zIndex: 0,
         }}
       />
 

@@ -562,3 +562,34 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
   same lines the graph frame uses (the designer reused them); kept faithful, consistent
   with the existing StepSection pattern.
 - Verified in a real browser (CDP in-viewport capture) — matches the frame.
+
+## Item 2 — single hero particle: fix cropping + duplicate
+
+- **Why a "duplicate" existed**: there were genuinely two `<img>` elements — the hero
+  particle (ref'd, scroll-animated) and a separate static particle that the previous
+  run parked inside the grey diagnostic card. The scroll never *moved* the hero one
+  into the card; it drifted to viewport centre and scrolled away, while the diagnostic
+  card had its own copy → reads as two.
+- **Now ONE instance that travels.** Removed the static diagnostic particle entirely.
+  The hero particle is the only one; on scroll it travels from the hero centre and
+  **docks onto the diagnostic card**, then parks there in document space:
+  - the scroll effect homes it onto `[data-particle-dock]` (the diagnostic card) with
+    an X+Y drift (`getBoundingClientRect` → card centre) and a shrink (scale → ~0.46)
+    so it fits *inside* the card (no cream fringe around it).
+  - **z-index:0** puts it above the hero's cream fill but below the hero content, and —
+    crucially — below the diagnostic card: `StepSection`'s grid is `z-index:1` (its own
+    stacking context), so the docked particle underlays the whole card.
+  - the diagnostic card grey is now translucent (`color-mix(... --color-panel 72%,
+    transparent)`) so the docked particle reads through it as the underlay glow, while
+    the opaque text content stays fully readable on top.
+- **Cropping fixed**: the hero is `overflow: visible` (was `hidden`), so the full
+  1920×1920 square cloud is never clipped at the hero edges (it just fades past the
+  viewport). The particle width is capped at ≤100vw (mobile was 124% → 100%) so the
+  un-clipped hero can't produce horizontal scroll — verified `scrollWidth == innerWidth`.
+- **Reduced motion**: the scroll effect short-circuits, leaving the single particle as
+  the hero centrepiece; the diagnostic card then shows as a plain (slightly translucent)
+  grey panel with no docked glow — acceptable static degradation.
+- Verified in-browser at scroll 0 (full blob, no crop), mid-scroll (travelling, behind
+  the headline), and docked (glowing within the grey card). The graph + new dashboard
+  sections keep their own decorative left-particles (separate, per Figma) — item 2 only
+  concerned the hero↔diagnostic pair.
