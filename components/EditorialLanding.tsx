@@ -65,7 +65,7 @@ const COPY = {
   // Diagnostic section (Figma 55:2)
   diagnostic: {
     step: '_stepOne',
-    verb: 'conduct ',
+    verb: 'Conduct ',
     method: 'diagnostic.Interviews',
     tagline: 'A listening agent — not a form.',
     cardLabel: 'diagnostic interviews',
@@ -80,7 +80,7 @@ const COPY = {
   // Context graph section (Figma 55:22)
   graph: {
     step: '_stepTwo',
-    verb: 'setting ',
+    verb: 'Setting ',
     method: 'contexts.Graph',
     tagline: 'Every signal, routed, deduped, written to record.',
     sources: { label: '.sources', chips: ['Interviews', 'Org chart', 'Metrics & OKRs', 'Meeting notes', 'Notion', 'Slack', 'Gmail', 'Hubspot', 'Google Sheets', 'Many more..'] },
@@ -102,7 +102,7 @@ const COPY = {
   // Transform / exec-dashboard section (Figma 56:344 — _stepThree)
   dashboard: {
     step: '_stepThree',
-    verb: 'transform data into ',
+    verb: 'Transform data into ',
     method: 'Dashboard',
     tagline: 'A listening agent — not a form.',
     rightSub: 'Every signal, routed, deduped, written to record.',
