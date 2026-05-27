@@ -334,3 +334,24 @@ goes through a token; any new value is added as a semantically-named token.
 - Verified by construction: hero content box left = `--page-gutter`; `StepSection`'s
   grid (no extra padding/margin) starts its first column — the `_stepOne` block — at
   the section's `--page-gutter` left. Same token ⇒ same edge. One inset, no exceptions.
+
+## Item 3 — vertically center hero particles
+
+- The particle was top-anchored (`top: clamp(2rem,4vw,5rem)` desktop / `40%` mobile),
+  so it sat high/low rather than centred.
+- **Fix (proper centring, no hardcoded offset)**: `top: 50%` +
+  `transform: translate(-50%, -50%)`. That mid-line anchor + half-size pull-back is
+  exact vertical centring at any particle size/viewport.
+- **Kept the scroll drift working**: the Task-2 effect overwrites `transform` each
+  frame, so it now writes `translate(-50%, calc(-50% + <drift>px)) scale(...)` —
+  i.e. the −50% centring baseline is preserved and the scroll drift is added on top.
+  At rest (scrollY 0 → drift 0) it resolves to `translate(-50%, calc(-50% + 0px))`,
+  identical to the CSS base, so there's no jump on mount.
+- Geometry simplified accordingly: with `top:50% + translateY(-50%)` the rest visual
+  centre equals `offsetTop`, so `naturalCenterAtEnd = offsetTop − heroH` (dropped the
+  now-incorrect `+ offsetHeight/2` term). `prefers-reduced-motion` still short-circuits
+  the effect, leaving the centred CSS base.
+- Verification: no scriptable headless browser is installed (no puppeteer/playwright)
+  and NOTES already records the particle PNG failing to paint in headless captures, so
+  this was verified by geometry/derivation rather than a screenshot; flagged for the
+  morning manual pass.

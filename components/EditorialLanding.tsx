@@ -654,13 +654,15 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       // progress through the hero's exit (0 at top → 1 after one hero-height)
       const p = Math.min(1, Math.max(0, window.scrollY / heroH));
       const ease = smoothstep(p);
-      // Particle centre's natural viewport-Y once the page has scrolled `heroH`.
-      // offsetTop/offsetHeight are layout metrics (transform-independent).
-      const naturalCenterAtEnd = img.offsetTop + img.offsetHeight / 2 - heroH;
+      // With top:50% + translateY(-50%), the particle's rest visual centre sits at
+      // offsetTop (a transform-independent layout metric). After scrolling `heroH`
+      // that centre's viewport-Y is offsetTop - heroH; drift moves it to mid-viewport.
+      const naturalCenterAtEnd = img.offsetTop - heroH;
       const drift = window.innerHeight / 2 - naturalCenterAtEnd; // → viewport centre
       const ty = ease * drift;
       const scale = 1 - 0.55 * ease;
-      img.style.transform = `translate(-50%, ${ty.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+      // Preserve the -50% vertical-centring baseline; add the scroll drift on top.
+      img.style.transform = `translate(-50%, calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
@@ -737,8 +739,11 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         alt=""
         aria-hidden="true"
         style={{
-          position: 'absolute', left: '50%', top: isMobile ? '40%' : 'clamp(2rem, 4vw, 5rem)',
-          transform: 'translateX(-50%)', transformOrigin: 'center center', willChange: 'transform',
+          // Strictly vertically centred in the hero viewport: top:50% anchors the
+          // box's mid-line, translate(-50%,-50%) pulls it back by half its own size.
+          // The scroll effect keeps the -50% baseline and only adds drift on top.
+          position: 'absolute', left: '50%', top: '50%',
+          transform: 'translate(-50%, -50%)', transformOrigin: 'center center', willChange: 'transform',
           width: isMobile ? '124%' : 'min(92vw, 1040px)', maxWidth: 'none', height: 'auto',
           pointerEvents: 'none', userSelect: 'none', zIndex: 1,
         }}
