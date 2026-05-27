@@ -665,3 +665,31 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
     every label/badge/line/control reads on top.
 - Verified in-browser: hero centrepiece intact; diagnostic shows the particle above the
   opaque grey with all text readable; graph/dashboard unaffected.
+
+## Item 2 — full particles scroll choreography (hero → who-it's-for)
+
+- Rewrote the hero scroll effect as ONE continuous journey for a SINGLE element,
+  expressed as per-phase viewport targets (vx, vy, scale) → transform. Visual centre =
+  (vw/2 + tx, restY + ty); we solve tx,ty so the blob lands on each phase's target.
+  All anchors read live from the DOM each frame (tracks layout/resize):
+  - **① hero**: centred, full size.
+  - **② diagnostic dock**: document-anchored onto `[data-particle-dock]`, shrunk to fit
+    (scale 0.46), layered per item 1 (above grey, below content).
+  - **③ rise**: from the card up to the graph's UPPER-LEFT (lifted high, fully visible —
+    no longer low/cropped).
+  - **④ pin**: holds a fixed viewport position on the LEFT through the graph + dashboard
+    sections (a fake-fixed via transform that tracks scroll).
+  - **⑤ release**: un-pins as `[data-particle-release]` (the "Who it's for" section)
+    arrives, then scrolls away naturally.
+  Phases are bounded by live offsets: `B1 = heroH`, `B2 = graph top`,
+  `B3 = whoTop − 0.25·vh` (clears as "who" centres).
+- **No duplicates**: removed the graph + dashboard static left-particles (and the now
+  unused `bgVisual` prop on `StepSection`). The journey is one `<img>`. The only other
+  particle is the decorative one inside the bottom orange CTA — a separate, static
+  element well past the journey's end (kept, as before).
+- Layering holds throughout (z-index:-1, above section bgs, below text) — same rule as
+  item 1. `prefers-reduced-motion`: the effect short-circuits, leaving the particle as a
+  static hero centrepiece (no dock/pin); graph/dashboard simply have no blob then —
+  acceptable static degradation.
+- Verified in-browser at every phase: hero centre, diagnostic dock (text readable on
+  top), graph upper-left, dashboard (still pinned left), and a clean release at "who".

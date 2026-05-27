@@ -449,9 +449,9 @@ function Reveal({ children, delay = 0, style }: { children: React.ReactNode; del
 // visual (`children`) lives in the RIGHT column, so it aligns under the headline
 // ("conduct" / "setting"), not under the step. `bgVisual` is an absolute layer
 // behind everything (used for the graph's left-side particle).
-function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVisual, children }: {
+function StepSection({ step, verb, method, tagline, rightSub, dataSection, children }: {
   step: string; verb: string; method: string; tagline: string; rightSub?: string;
-  dataSection: string; bgVisual?: React.ReactNode; children: React.ReactNode;
+  dataSection: string; children: React.ReactNode;
 }) {
   const isMobile = useIsMobile();
   const heading: CSSProperties = {
@@ -466,7 +466,6 @@ function StepSection({ step, verb, method, tagline, rightSub, dataSection, bgVis
   };
   return (
     <section data-section={dataSection} style={{ position: 'relative', overflow: 'hidden', ...SECTION }}>
-      {bgVisual}
       <div style={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 0.8fr) minmax(0, 2fr)',
@@ -697,22 +696,10 @@ function GraphDiagram() {
 
 function ContextGraphSection() {
   const g = COPY.graph;
-  const isMobile = useIsMobile();
-  // particle 1 — LEFT side, fully visible (not cropped). Standalone static <img>;
-  // the hero animation targets its own element by ref, so there's no conflict.
-  const particle = (
-    <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
-      position: 'absolute', zIndex: -1, pointerEvents: 'none', userSelect: 'none',
-      left: isMobile ? '50%' : '0',
-      top: isMobile ? '10%' : '50%',
-      transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
-      width: isMobile ? '74%' : 'clamp(12rem, 22vw, 22rem)', height: 'auto',
-      opacity: isMobile ? 0.16 : 0.95,
-    }} />
-  );
+  // No static left-particle: the single hero particle pins to the left here (see Hero).
   return (
     <StepSection dataSection="graph" step={g.step} verb={g.verb} method={g.method}
-      tagline={COPY.diagnostic.tagline} rightSub={g.tagline} bgVisual={particle}>
+      tagline={COPY.diagnostic.tagline} rightSub={g.tagline}>
       <GraphDiagram />
     </StepSection>
   );
@@ -802,24 +789,12 @@ function ExecDashboard() {
 }
 
 function TransformDashboardSection() {
-  const isMobile = useIsMobile();
   const d = COPY.dashboard;
-  // particle 1 — LEFT side, matching the graph section's decorative blob (Figma
-  // frame 56:344 includes "particles 1" at x=-18). Standalone <img>, no ref, so it
-  // never collides with the hero particle's scroll animation.
-  const particle = (
-    <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{
-      position: 'absolute', zIndex: -1, pointerEvents: 'none', userSelect: 'none',
-      left: isMobile ? '50%' : '0',
-      top: isMobile ? '10%' : '50%',
-      transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
-      width: isMobile ? '74%' : 'clamp(12rem, 22vw, 22rem)', height: 'auto',
-      opacity: isMobile ? 0.16 : 0.95,
-    }} />
-  );
+  // No static left-particle: the single hero particle stays pinned to the left through
+  // this section (see Hero), then releases at "Who it's for".
   return (
     <StepSection dataSection="dashboard" step={d.step} verb={d.verb} method={d.method}
-      tagline={d.tagline} rightSub={d.rightSub} bgVisual={particle}>
+      tagline={d.tagline} rightSub={d.rightSub}>
       <ExecDashboard />
     </StepSection>
   );
@@ -850,31 +825,64 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
     if (reduce) return;
 
     let raf = 0;
-    const smoothstep = (t: number) => t * t * (3 - 2 * t);
+    const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+    const smoothstep = (t: number) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    // ── ONE continuous scroll journey ──
+    //   ① hero centre (large)  ② dock onto the diagnostic card  ③ rise to the graph's
+    //   upper-left  ④ PIN to the left through graph + dashboard  ⑤ release at "who".
+    // Each phase yields a target viewport centre (vx, vy) + scale; we convert that to a
+    // transform. Visual centre = (vw/2 + tx, restY + ty); set tx,ty so it lands on the
+    // target. Anchors are read live from the DOM each frame, so it tracks layout/resize.
     const update = () => {
       raf = 0;
+      const y = window.scrollY;
+      const vw = window.innerWidth, vh = window.innerHeight;
       const heroH = sec.offsetHeight || 1;
-      // Travel progress: 0 at hero top → 1 after one hero-height of scroll.
-      const p = Math.min(1, Math.max(0, window.scrollY / heroH));
-      const ease = smoothstep(p);
-      // The single particle docks onto the diagnostic card. Its rest visual centre is
-      // (vw/2, offsetTop) — top:50% + translateY(-50%) puts the centre at offsetTop, a
-      // transform-independent layout metric. We drift it to the card's centre (document
-      // coords) and shrink it to fit inside the card, where it underlays the panel.
-      const vw = window.innerWidth;
-      const dock = document.querySelector('[data-particle-dock]') as HTMLElement | null;
-      const restCenterY = img.offsetTop;            // document Y of the rest centre
-      let targetCenterY = restCenterY + heroH;       // fallback: one hero down
-      let targetCenterX = vw / 2;
-      if (dock) {
-        const r = dock.getBoundingClientRect();
-        targetCenterY = r.top + window.scrollY + r.height / 2;
-        targetCenterX = r.left + r.width / 2;
+      const restY = img.offsetTop;          // hero-centre document Y (top:50% + −50%)
+      const baseW = img.offsetWidth || 1;   // unscaled particle width
+
+      const q = (sel: string) => document.querySelector(sel) as HTMLElement | null;
+      const dockEl = q('[data-particle-dock]');
+      const graphEl = q('[data-section="graph"]');
+      const releaseEl = q('[data-particle-release]');
+      const dr = dockEl?.getBoundingClientRect();
+      const dockDocY = dr ? dr.top + y + dr.height / 2 : restY + heroH;
+      const dockX = dr ? dr.left + dr.width / 2 : vw / 2;
+      const graphTop = graphEl ? graphEl.getBoundingClientRect().top + y : restY + heroH * 2;
+      const releaseTop = releaseEl ? releaseEl.getBoundingClientRect().top + y : graphTop + heroH * 2;
+
+      const sDock = 0.46;                    // fits inside the diagnostic card
+      const sPin = 0.40;                     // left-side size during the pin
+      const pinVY = vh * 0.34;               // upper area
+      // pinned centre-X: keep the (scaled) blob fully on-screen against the left rail.
+      const pinVX = clamp(vw * 0.04 + (baseW * sPin) / 2, (baseW * sPin) / 2, vw * 0.5);
+
+      const B1 = heroH;                              // hero → dock
+      const B2 = Math.max(B1 + 1, graphTop);         // dock → upper-left (pin starts)
+      // pin ends as "who" arrives — release a touch before its top hits the viewport
+      // top so the blob has cleared by the time the section is centred.
+      const B3 = Math.max(B2 + 1, releaseTop - vh * 0.25);
+
+      let vx: number, vy: number, scale: number;
+      if (y <= B1) {
+        const t = smoothstep(y / Math.max(1, B1));
+        vy = lerp(restY, dockDocY, t) - y;           // document-anchored interpolation
+        vx = lerp(vw / 2, dockX, t);
+        scale = lerp(1, sDock, t);
+      } else if (y <= B2) {
+        const t = smoothstep((y - B1) / (B2 - B1));
+        vy = lerp(dockDocY - y, pinVY, t);           // card (doc-anchored) → upper-left
+        vx = lerp(dockX, pinVX, t);
+        scale = lerp(sDock, sPin, t);
+      } else if (y <= B3) {
+        vx = pinVX; vy = pinVY; scale = sPin;        // PINNED (fixed viewport position)
+      } else {
+        vx = pinVX; vy = (B3 + pinVY) - y; scale = sPin; // released → scroll away
       }
-      const tx = ease * (targetCenterX - vw / 2);
-      const ty = ease * (targetCenterY - restCenterY);
-      const scale = 1 - 0.54 * ease;                 // → ~0.46, fits within the card
-      // Keep the −50%,−50% centring baseline; add the dock drift on top.
+
+      const tx = vx - vw / 2;
+      const ty = (y + vy) - restY;
       img.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
@@ -1080,8 +1088,8 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       {/* TRANSFORM / EXEC DASHBOARD (Figma 56:344 — _stepThree) */}
       <TransformDashboardSection />
 
-      {/* WHO IT'S FOR */}
-      <section style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
+      {/* WHO IT'S FOR — the scroll particle releases (un-pins) when this section arrives */}
+      <section data-particle-release="true" style={{ ...SECTION, borderTop: 'var(--border-thin) solid var(--color-border)' }}>
         <Reveal><SectionHead kicker={COPY.whoKicker} title={COPY.whoTitle} titleMaxW="24ch" /></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-4)' }}>
           {COPY.who.map((w, i) => (
