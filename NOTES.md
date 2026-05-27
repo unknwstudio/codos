@@ -693,3 +693,14 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
   acceptable static degradation.
 - Verified in-browser at every phase: hero centre, diagnostic dock (text readable on
   top), graph upper-left, dashboard (still pinned left), and a clean release at "who".
+
+## Item 3 — unify "WITH CODOS" green with the Listening indicator
+
+- The Listening status dot already uses the token **`--color-status-live`**
+  (→ `--color-signal` `#00c22d`, the vivid signal green) — i.e. NOT a hardcoded value,
+  so no promotion was needed. Reused that exact token for the comparison table's
+  "WITH CODOS" header text and its bullet dots (were `--color-success` `#2c5a44`, a
+  darker forest green). Both now render the identical green as the Listening badge.
+- Scope: only the comparison "WITH CODOS" column (header + dots). The dashboard's
+  positive-delta "+$20K" stays on `--color-success` (a different, semantic use).
+- Verified in-browser: the table header + all five dots are the bright signal green.
