@@ -704,3 +704,60 @@ here, so I worked from the structural metadata + screenshot and mapped onto our 
 - Scope: only the comparison "WITH CODOS" column (header + dots). The dashboard's
   positive-delta "+$20K" stays on `--color-success` (a different, semantic use).
 - Verified in-browser: the table header + all five dots are the bright signal green.
+
+## Item 4 — full responsive audit
+
+Audited every section in a real browser at ~500px (mobile, headless floors at 500),
+~800px (narrow desktop, just above the 760 breakpoint) and 1440px (wide). `scrollWidth
+== innerWidth` at every width — **no horizontal overflow anywhere** (`<body>` also has
+`overflow-x:hidden` as a backstop).
+
+- **Hero**: headline row→column, particle centred, CTA buttons wrap. ✓
+- **Diagnostic**: card full-width on mobile; particle docks + layers (item 1) at all widths. ✓
+- **Exec dashboard**: tab bar wraps; feed|metrics 2-col collapses to 1-col under 760;
+  tight-but-readable in the 760–900 band. ✓
+- **Step row (01/02/03)**: 3-col → 1-col on mobile. ✓
+- **Context graph + node diagram**: the dense diagram keeps its `min-width:38rem` and
+  scrolls **inside its own `overflow-x:auto` container** on narrow widths (never the
+  page). ✓
+- **Team / FAQ**: drop from the shared step-grid (headline col1 + content col2–3) to a
+  single stacked column on mobile. ✓
+- **Comparison table**: 3-col → 2-col (metric spans, then diy | codos) on mobile;
+  green preserved. ✓
+- **CTA + footer**: orange block, content stacks; footer links wrap. ✓
+- **Particle choreography degradation (the critical check)**: the pinned-left blob never
+  causes overflow or layout shift (it's z-index:-1, behind content, and `pinVX` is
+  clamped so the scaled blob stays on-screen). Its opacity is now **width-driven** —
+  full in the hero everywhere, then fading to ~0.22 on narrow viewports (where content
+  stacks full-width over it) and back up to full on wide desktop. So on mobile/tablet it
+  reads as a faint backdrop instead of a heavy blob behind dense text.
+- **Type scale**: the fluid `clamp()` tokens hold mobile→wide (headlines wrap, nothing
+  overflows) — no scale change, so **/ds needs no update**.
+
+---
+
+## Summary — third pass (4 commits)
+
+1. `fix: particles z-order in diagnostic section` — established the global layering
+   architecture (transparent wrap/hero over the body cream; particle z-index:-1; grid
+   no longer a stacking context; visual out of the will-change Reveal) and rendered the
+   diagnostic grey as a z-index:-2 fill box, so the docked particle sits ABOVE the grey
+   but BELOW the (readable) card content.
+2. `fix: full particles scroll choreography hero to who-its-for` — one continuous,
+   single-element journey (hero → diagnostic dock → graph upper-left → pinned left
+   through graph+dashboard → release at "who"), built from per-phase viewport targets.
+   Removed the two static duplicate particles + the now-unused `bgVisual` prop.
+3. `fix: unify WITH CODOS green with Listening indicator` — reused the Listening dot's
+   token `--color-status-live` for the comparison "WITH CODOS" header + dots.
+4. `fix: full responsive audit across all sections` — verified/adjusted all sections
+   mobile→wide; made the pinned particle's opacity width-driven for graceful mobile
+   degradation; confirmed zero horizontal overflow at every width.
+
+Judgment calls: (a) item 1 needed a page-wide layering change (transparent wrap + body
+cream canvas) to let one element sit between a card's bg and its content — documented
+above. (b) The bottom orange-CTA particle is a separate static decorative element
+outside the hero→who journey; kept as-is (the "single moving element" rule applies to
+the journey). (c) Removing the section visuals from the Reveal means cards/diagrams no
+longer fade-in (headlines still do) — a deliberate trade for correct particle layering.
+(d) `prefers-reduced-motion` leaves the particle as a static hero centrepiece (no
+dock/pin); the graph/dashboard then have no blob — acceptable static degradation.

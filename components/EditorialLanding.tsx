@@ -884,6 +884,12 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       const tx = vx - vw / 2;
       const ty = (y + vy) - restY;
       img.style.transform = `translate(calc(-50% + ${tx.toFixed(1)}px), calc(-50% + ${ty.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
+      // Opacity: full in the hero (centrepiece, every viewport); once it docks/pins it
+      // fades to a width-driven backdrop level — faint on narrow viewports (where content
+      // stacks full-width over it), near-full on wide desktop (where the left rail has
+      // room). A smooth graceful degradation rather than a hard mobile/desktop switch.
+      const postOp = lerp(0.22, 1, smoothstep((vw - 600) / 600));
+      img.style.opacity = lerp(1, postOp, smoothstep(y / Math.max(1, B1))).toFixed(3);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
