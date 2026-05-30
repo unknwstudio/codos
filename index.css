@@ -18,16 +18,20 @@
     opacity var(--duration-base) var(--ease-out);
   will-change: transform;
 }
-.lp-btn:hover { transform: translateY(-2px); }
-.lp-btn:active { transform: translateY(0); }
-.lp-btn--filled:hover { box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.5); }
+/* 6.1 — very subtle scale on hover, instant press; flat (no drop shadows — Part 8). */
+.lp-btn:hover { transform: scale(1.02); }
+.lp-btn:active { transform: scale(0.98); transition-duration: 0s; }
+.lp-btn--filled:hover { background: var(--color-ink-soft); }
 .lp-btn--outline:hover {
   border-color: var(--color-text);
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
-.lp-btn--accent:hover {
-  background: var(--color-accent-hover);
-  box-shadow: 0 12px 30px -14px var(--color-accent);
+.lp-btn--accent:hover { background: var(--color-accent-hover); }
+
+/* 6.1 — a tasteful custom dot cursor on the key CTAs: a small orange dot with a white
+   halo so it reads on both the orange (accent) and dark (filled) button fills. */
+.lp-btn--accent, .lp-btn--filled {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="11" cy="11" r="4" fill="%23F26B1F" stroke="%23ffffff" stroke-width="1.5"/></svg>') 11 11, pointer;
 }
 
 /* Text links (nav / footer / inline) */
@@ -101,10 +105,44 @@
 /* Partner logos / cards lift */
 .lp-logo { transition: opacity var(--duration-base) var(--ease-out), filter var(--duration-base) var(--ease-out); }
 .lp-logo:hover { opacity: 1 !important; }
-.lp-card { transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out); }
-.lp-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.35); }
+.lp-card { transition: transform var(--duration-base) var(--ease-out); }
+.lp-card:hover { transform: translateY(-2px); }  /* flat lift, no shadow (Part 8) */
 
 @media (prefers-reduced-motion: reduce) {
   .lp-btn, .lp-card, .lp-logo, .lp-faq > summary, .lp-faq .lp-faq-mark { transition: none; }
   .lp-btn:hover, .lp-card:hover { transform: none; }
+}
+
+/* ── Dashboard signal action pills (Part 4) — visible on the white card; subtle
+   darken on hover (~150ms). ── */
+.dash-pill {
+  background: var(--color-surface-sunken);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.dash-pill:hover { background: var(--color-ink-12); }
+
+/* ── Dashboard inactive tabs (6.2) — darken a touch more on hover. The cluster stays
+   locked (not-allowed cursor + book-a-demo tooltip from .dash-tablock). ── */
+.dash-tab { transition: background-color var(--duration-fast) var(--ease-out); }
+.dash-tab:hover { background: var(--color-warm-sunken-2) !important; }
+
+/* ── Particle cloud drift (6.6) — slow rotate + gentle scale "breathing", applied via
+   the individual `rotate`/`scale` properties so they compose with the JS-driven
+   `transform` (scroll choreography) rather than fighting it. Speeds up slightly while
+   hovering the closing-CTA section. ── */
+@keyframes particle-spin { to { rotate: 360deg; } }
+@keyframes particle-breathe { 0%, 100% { scale: 0.98; } 50% { scale: 1.02; } }
+.particle-drift { animation: particle-spin 60s linear infinite, particle-breathe 8s ease-in-out infinite; }
+#demo:hover .particle-drift { animation: particle-spin 40s linear infinite, particle-breathe 6s ease-in-out infinite; }
+
+/* ── Hero page-load entrance (6.7) — each group fades up once on load, staggered via
+   inline animation-delay (logo → headline → lede/CTAs → credentials). No splash. ── */
+@keyframes heroUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.hero-enter { animation: heroUp 0.45s var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-pill, .dash-tab { transition: none; }
+  .particle-drift { animation: none; }
+  .hero-enter { animation: none; }
 }

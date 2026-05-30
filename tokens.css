@@ -88,9 +88,9 @@
   --text-label: clamp(0.8125rem, 0.75rem + 0.3vw, 0.9375rem);   --leading-label: 1.3;  /* uppercase eyebrow → 15px */
   --text-caption: 0.75rem;  --leading-caption: 1.45;          /* 12px, fixed */
   /* Oversized display numeral — the exec-dashboard KPI values (Figma 63:143),
-     where the number is the dominant element of its column (~0.2× column width).
+     where the number DOMINATES its column (display-scale, ~80–110px desktop).
      Fluid like the rest of the scale; the small unit ($/%) renders at ~0.32em. */
-  --text-metric: clamp(2.75rem, 1.2rem + 5vw, 5rem);  --leading-metric: 1;  /* → 80px */
+  --text-metric: clamp(2.75rem, 0.8rem + 6vw, 6.5rem);  --leading-metric: 0.95;  /* → 104px */
 
   /* ---- Font weights ---- */
   --font-weight-thin: 100;
@@ -126,12 +126,16 @@
   --logo-h-header: clamp(17px, 1.5vw, 25px);
   --logo-h-footer: 21px;
 
-  /* ---- Motion ---- centralized easing + durations for transitions/reveals */
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* ---- Motion ---- centralized easing + durations for transitions/reveals.
+     --ease-out is the brand's engineered ease-out (cubic-bezier(0.22,1,0.36,1)):
+     a firm, decelerating curve with NO overshoot — the single global easing for
+     every transition/reveal (polish-pass Part 1). --ease-spring is retained only
+     for any legacy use; the brief forbids bounce/overshoot, so prefer --ease-out. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
-  --duration-slow: 700ms;
+  --duration-slow: 500ms;  /* section reveals (polish-pass 6.3) */
 
   /* ---- Responsive layout ----
      Breakpoints are the single source for layout switches (the JS `useIsMobile`
@@ -144,7 +148,7 @@
   /* Single page inset — the one left+right rail every section inherits.
      Tightened 30% from the original clamp(1.25rem, 4vw, 4rem). */
   --page-gutter: clamp(0.875rem, 2.8vw, 2.8rem); /* fluid page side padding */
-  --section-y: clamp(3.5rem, 7vw, 7rem);      /* fluid section vertical rhythm */
+  --section-y: clamp(4rem, 9vw, 9rem);        /* fluid section vertical rhythm — ~120–144px desktop (polish-pass 7.3) */
 
   /* ============================================================
      COLOR — real product values, pixel-exact to the live pages.
@@ -164,6 +168,7 @@
   --color-ink-55: rgba(26, 26, 26, 0.55);
   --color-ink-22: rgba(26, 26, 26, 0.22);
   --color-ink-12: rgba(26, 26, 26, 0.12);
+  --color-ink-08: rgba(26, 26, 26, 0.08);
   --color-ink-06: rgba(26, 26, 26, 0.06);
 
   /* Primitive brand (editorial orange) */
@@ -172,6 +177,9 @@
 
   /* Primitive accents used by the brand product mocks (hero/diagnostic/graph) */
   --color-mist: #d9d9d9;   /* neutral product-mock panel surface */
+  --color-warm-gray: #e5e2dd; /* warm light-gray — exec-dashboard container (Figma 63:143) */
+  --color-warm-sunken: #d8d4cb; /* a touch darker than warm-gray — inactive dashboard tabs */
+  --color-warm-sunken-2: #cdc8bd; /* darker still — inactive tab :hover */
   --color-sun: #ffe100;    /* highlight yellow (graph "judge" node) */
   --color-signal: #00c22d; /* live / "listening" status green */
 
@@ -193,6 +201,7 @@
   --color-faint: var(--color-ink-55);
   --color-border: var(--color-ink-12);
   --color-border-strong: var(--color-ink-22);
+  --color-hairline: var(--color-ink-08);       /* consistent 1px divider on light (polish-pass 7.2) */
   --color-accent: var(--color-brand);
   --color-accent-hover: #d95f15; /* /ds button hover — design choice, not a live-page value */
   --color-accent-contrast: var(--color-cream);
@@ -203,6 +212,8 @@
 
   /* Brand product-mock roles (consumed by hero/diagnostic/graph) */
   --color-panel: var(--color-mist);            /* mock UI panel / device surface */
+  --color-panel-warm: var(--color-warm-gray);  /* warm exec-dashboard container (Figma 63:143) */
+  --color-panel-tab: var(--color-warm-sunken); /* inactive dashboard tab — slightly darker than the warm container */
   --color-panel-chip: var(--color-white);      /* white chips inside panels */
   --color-highlight: var(--color-sun);         /* emphasized "judge" node */
   --color-highlight-contrast: var(--color-ink);/* text on --color-highlight */

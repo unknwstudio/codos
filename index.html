@@ -30,11 +30,14 @@
       /* overscroll-behavior-y: none stops the page rubber-banding past its ends, so
          the cream canvas never shows as a strip below the orange footer — the page
          ends flush at the footer. */
-      html, body { margin: 0; padding: 0; overscroll-behavior-y: none; }
+      /* overflow-x: clip (not hidden) clips horizontal spill — e.g. the slowly
+         rotating hero particle's corners (polish-pass 6.6) — WITHOUT creating a
+         scroll container, so it never breaks the sticky step column or the
+         particle's vertical scroll travel. */
+      html, body { margin: 0; padding: 0; overscroll-behavior-y: none; overflow-x: clip; }
       body {
         background-color: #f5f1ea;
         color: #1a1a1a;
-        overflow-x: hidden;
         font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       }
       ::-webkit-scrollbar { width: 8px; }

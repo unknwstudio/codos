@@ -20,6 +20,9 @@ dist-ssr
 *.dmg
 *.mp4
 
+# Local screenshot/QA scratch dir (playwright captures + helper scripts)
+.shots/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

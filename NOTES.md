@@ -858,3 +858,106 @@ Chrome via CDP at widths 320 → 1920.
   motion). Acceptable static degradation.
 
 Build green + typecheck passing after the final commit. Nothing pushed — local only.
+
+# Polish + motion pass — Parts 1–3 (2026-05-30)
+
+Full spec committed to `POLISH-SPEC.md` (8 parts). Register: Linear/Stripe/Vercel/Anthropic —
+quiet, engineered, restrained. Project moved to `~/code/codos` (off Desktop). Executed Parts 1–3
+only; **paused for screenshot review before Part 4+** (per the user's gate). Build + typecheck
+green; **not committed** (awaiting review). Before/after shots in `.shots/before|after|after-mobile/`.
+
+**Decision (user-confirmed):** dashboard `_stepThree` KEEPS the shared sticky left label column +
+traveling/pinned particle across all three steps (spec 2.4), rather than the vertical "headline-top,
+particle-behind" restructure (spec 2.1). 2.1 and 2.4 contradicted; user chose to preserve the
+signature traveling-particle architecture. So 2.1's particle-behind ask is intentionally NOT applied.
+
+## Part 1 — motion library
+- framer-motion 12.40 + gsap 3.15 (incl. MotionPathPlugin) were already installed by a prior
+  session; verified present. No ScrollSmoother. The component still hand-rolls scroll motion;
+  framer-motion wiring is deferred to Parts 4–6.
+- `--ease-out` retuned to the brand curve `cubic-bezier(0.22, 1, 0.36, 1)` (was `0.2,0.8,0.2,1`) —
+  the single global easing. `--ease-spring` (overshoot) is referenced ONLY by the /ds doc page,
+  never applied to a landing transition, so no bounce exists in the live motion.
+
+## Part 2 — structural fixes
+- **2.1** superseded by the user decision above (no restructure).
+- **2.2** orange CTA flush to top: zeroed the FAQ section's `paddingBottom` so the orange begins
+  immediately below the FAQ (no cream gap); the orange's own top padding is the breathing room.
+  Orange was already full-bleed (bg on the section, gutter inside).
+- **2.3** footer hugs the bottom: footer padding tightened to `--space-8 / --space-6` (~48/32px,
+  was `--section-y` ~112px both sides); `#demo` bottom padding cut to `--space-8` so the row no
+  longer floats in dead space.
+- **2.4** step gap doubled: PinnedSteps desktop grid `gap --space-8 → --space-12` (48→96px) so the
+  right headline/visual stops bleeding into the sticky `_stepN` label column. One shared grid →
+  applies to all three steps.
+- **2.5** a16z logo: `HERO_LOGO_RIGHT.src` swapped from `a16z-speedrun.png` to
+  `/assets/logo/speedrun.svg` (vector, 342×48). Renders the full "a16z /speedrun" lockup.
+
+## Part 3 — dashboard mock (Figma 63:143 fidelity)
+Hosted claude.ai Figma MCP still access/rate-limited → used the spec's stated values.
+New tokens: `--color-warm-gray #e5e2dd` (+ role `--color-panel-warm`), `--color-warm-sunken #d8d4cb`
+(+ role `--color-panel-tab`). `--text-metric` max raised 5rem→6.5rem (~104px), leading 1→0.95.
+- **3.1** container → warm `#E5E2DD`, `--radius-lg` (16px), padding `--space-8` desktop.
+- **3.2** tab pills → `--radius-md` (8px); inactive tabs use `--color-panel-tab` (slightly darker
+  than the container, dark text); exec-summary yellow active; simulate white.
+- **3.3** body split ~58/42 (`1.38fr / 1fr`); LEFT signals+ask-anything wrapped in a nested WHITE
+  card (`--color-surface`, `--radius-lg`, `--space-6` pad); RIGHT KPI column sits directly on warm gray.
+- **3.4** metric numerals → mono (`--font-body`, was headline serif), display-scale (~100px), tight
+  tracking (-0.02em); `$` superscript upper-left, `%` upper-right.
+- **3.5** each KPI block: 1px hairline rule above (incl. first), `--space-6` (~32px) top padding,
+  column gap tightened to `--space-2`.
+
+Verified in headless Chrome 1440 + 390; zero horizontal overflow at 390.
+
+# Polish + motion pass — Parts 4–7 (2026-05-30)
+
+Continued the same pass through the remaining parts (user said execute everything, no more
+gates). framer-motion now wired (was only installed). Build + typecheck green; verified in
+headless Chrome — zero console errors, no horizontal overflow at 1440/390, sticky step column
+intact, signals loop + diagram dots confirmed running. All motion honours prefers-reduced-motion.
+
+## Part 4 — dashboard signals loop
+New `SignalsCard` replaces the static 3-signal feed in the white card. Pool of 15 terse,
+founder-relevant signals (`SIGNAL_POOL`); 3 visible; every 2.5s a new one fades+slides in from the
+bottom and the oldest leaves off the top (framer-motion `AnimatePresence mode="popLayout"` +
+`layout`), looping seamlessly. Timestamp static "14:21". Pauses on hover anywhere in the card
+(pausedRef). Action pills are now real buttons with a visible fill (`--color-surface-sunken`, were
+invisible white-on-white) + a `.dash-pill` hover darken (~150ms).
+
+## Part 5 — context-graph diagram dots
+`GraphDiagram` now animates orange dots down every connector. One GSAP tween per edge drives a 0→1
+progress; each frame positions a lead + 3 trail dots via `path.getPointAtLength` (4 dots/edge ×
+12 edges). Opacity envelope fades dots in at the source / out at the destination so the continuous
+loop never snaps; staggered start + 1.2–1.8s/segment. r=9 viewBox units (~6–8px rendered). No
+glow/blur. Dots sit inside the SVG (clipped to it); aspect-locked container keeps them circular.
+
+## Part 6 — motion polish
+- 6.1 buttons: hover `scale(1.02)`, press `scale(0.98)` instant; bg shift; **drop shadows removed**
+  (Part 8 flat brand). Custom CTA cursor: small orange dot + white halo (reads on orange & dark).
+- 6.2 inactive tabs darken on hover (`.dash-tab`, 150ms). **layoutId pill-slide SKIPPED** — the tab
+  cluster is intentionally locked (not-allowed cursor + book-a-demo tooltip), and the spec made the
+  slide conditional on "if tabs become interactive." They are not.
+- 6.3 reveals retuned: y 26→12px, **blur removed** (Part 1: "y-offset + opacity, never more"),
+  `--duration-slow` 700→500ms, stagger via existing `delay` prop. Kept the CSS IntersectionObserver
+  `Reveal` (same visual result as whileInView) to avoid framer transforms creating stacking contexts
+  that would trap the scroll particle.
+- 6.4 step label typewriter (`Typewriter`): the desktop sticky `_stepN` label types in char-by-char
+  (~400ms) and retypes as the active step swaps. Mobile labels left static (minor deviation).
+- 6.5 metric count-up (`CountUp`): each KPI counts 0→target over 1.2s ease-out on scroll-in
+  (framer `animate` + IO), then static. Parses suffix/decimals ("415K", "18.2", "118").
+- 6.6 particle drift: slow `rotate` 360°/60s + `scale` breathe 0.98–1.02/8s via the individual
+  rotate/scale CSS props (compose with the JS `transform`, don't fight it); `#demo:hover` speeds to
+  40s/6s. The rotating hero particle's corners overflowed the viewport → fixed with
+  `html,body { overflow-x: clip }` (clip, not hidden, so sticky + vertical particle travel survive).
+- 6.7 hero page-load entrance (`.hero-enter`): logo → headline → lede/CTAs → credentials fade up
+  staggered (0/80/160/240ms), no splash.
+
+## Part 7 — typography + edge polish
+- 7.1 display headlines were already -0.02em; added -0.01em tracking to the card h3 titles.
+- 7.2 added `--color-hairline` (rgba(0,0,0,0.08)) for consistent dividers (FAQ rows, white-card
+  divider); removed ALL drop shadows (cards + buttons) per the flat brief; radii consistent
+  (16px containers, 8px tabs, 4px pills).
+- 7.3 `--section-y` raised to clamp(4rem, 9vw, 9rem) → ~120–144px desktop rhythm.
+
+Part 8 constraints all respected (no scroll-jack/ScrollSmoother/splash/glow/parallax; reveals only
+on headline+sub+key visual; subtle dot cursor only).

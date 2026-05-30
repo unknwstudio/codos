@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Mic } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion, animate } from 'framer-motion';
+import { gsap } from 'gsap';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Editorial Landing — V2 from Claude Design handoff (Codos)
@@ -9,6 +11,9 @@ import { Mic } from 'lucide-react';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT = '#F26B1F';
+// Brand easing for JS-driven motion (framer-motion + gsap) — the same firm,
+// no-overshoot ease-out as the CSS --ease-out token (polish-pass Part 1).
+const BRAND_EASE = [0.22, 1, 0.36, 1] as const;
 
 // Shared brand assets exported from Figma (particle cloud + CODOS wordmark).
 // The particle PNG is reused across the hero, diagnostic and graph frames.
@@ -23,7 +28,7 @@ const HERO_LOGOS_LEFT = [
   { src: '/assets/logo/meta.svg', alt: 'Meta', h: 1.0 },
   { src: '/assets/logo/mckinsey.svg', alt: 'McKinsey & Company', h: 1.55 },
 ];
-const HERO_LOGO_RIGHT = { src: '/assets/logo/a16z-speedrun.png', alt: 'a16z Speedrun', h: 1.5 };
+const HERO_LOGO_RIGHT = { src: '/assets/logo/speedrun.svg', alt: 'a16z Speedrun', h: 1.5 };
 
 // ───────────────── Responsive helper ─────────────────
 function useIsMobile(breakpoint = 760) {
@@ -435,9 +440,10 @@ function Reveal({ children, delay = 0, style }: { children: React.ReactNode; del
       style={{
         ...style,
         opacity: shown ? 1 : 0,
-        transform: shown ? 'none' : 'translateY(26px)',
-        filter: shown ? 'none' : 'blur(5px)',
-        transition: `opacity var(--duration-slow) var(--ease-out) ${delay}ms, transform var(--duration-slow) var(--ease-out) ${delay}ms, filter var(--duration-slow) var(--ease-out) ${delay}ms`,
+        // Subtle lift only — 12px + opacity, no blur (polish-pass Part 1: "8–12px
+        // y-offset + opacity, never more"). Stagger via the `delay` prop.
+        transform: shown ? 'none' : 'translateY(12px)',
+        transition: `opacity var(--duration-slow) var(--ease-out) ${delay}ms, transform var(--duration-slow) var(--ease-out) ${delay}ms`,
         willChange: 'opacity, transform',
       }}
     >
@@ -561,11 +567,15 @@ function PinnedSteps() {
   // diagram scrolls inside its own overflow-x:auto wrapper.
   return (
     <section style={{ ...SECTION, position: 'relative' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 0.8fr) minmax(0, 2fr)', gap: 'var(--space-8)', position: 'relative' }}>
+      {/* Gap doubled (--space-8 → --space-12, polish-pass 2.4) so the right-hand
+          headline/visual no longer bleeds into the sticky "_stepN" label column. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 0.8fr) minmax(0, 2fr)', gap: 'var(--space-12)', position: 'relative' }}>
         {/* shared pinned left column — sticky; its step name changes with scroll */}
         <div>
           <div style={{ position: 'sticky', top: '22vh' }}>
-            <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>{steps[active].name}</div>
+            <div style={{ ...heading, fontFamily: 'var(--font-headline)' }}>
+              <Typewriter text={steps[active].name} />
+            </div>
             <p style={STEP_SUB}>{tagline}</p>
           </div>
         </div>
@@ -717,6 +727,10 @@ type GraphNode = { x: number; y: number; w: number; h: number; label: string; ch
 function GraphDiagram() {
   const g = COPY.graph;
   const W = 1153, H = 777;
+  const reduce = useReducedMotion();
+  const TRAIL = 4;                       // lead + 3 trailing dots per connector (Part 5)
+  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const dotRefs = useRef<(SVGCircleElement | null)[][]>([]);
 
   // ── Single source of truth: node boxes in design units ──
   const N: Record<string, GraphNode> = {
@@ -751,19 +765,219 @@ function GraphDiagram() {
     width: `${(n.w / W) * 100}%`, height: `${(n.h / H) * 100}%`,
   });
 
+  // ── Part 5 — orange dots travel each connector, continuously + staggered ──
+  // One GSAP tween per edge drives a 0→1 progress; each frame positions the lead +
+  // trail dots along the path via getPointAtLength (the SVG keeps its viewBox units
+  // and the container preserves the diagram's aspect ratio, so positions stay true).
+  // An opacity envelope fades dots in at the source and out at the destination so the
+  // continuous loop never visibly snaps. No glow/blur — clean dots, short fading trail.
+  useEffect(() => {
+    if (reduce) return;
+    const trailBase = [1, 0.55, 0.32, 0.18];
+    const envelope = (p: number) => (p < 0.12 ? p / 0.12 : p > 0.88 ? (1 - p) / 0.12 : 1);
+    const tweens: gsap.core.Tween[] = [];
+    edges.forEach((_, i) => {
+      const path = pathRefs.current[i];
+      const dots = dotRefs.current[i];
+      if (!path || !dots) return;
+      const len = path.getTotalLength();
+      const st = { p: 0 };
+      const dur = 1.2 + Math.random() * 0.6;            // 1.2–1.8s per segment
+      tweens.push(gsap.to(st, {
+        p: 1, duration: dur, ease: 'none', repeat: -1, delay: Math.random() * dur,
+        onUpdate: () => {
+          for (let j = 0; j < dots.length; j++) {
+            const c = dots[j];
+            if (!c) continue;
+            const pp = st.p - j * 0.05;                  // each trail dot lags the lead
+            if (pp < 0) { c.style.opacity = '0'; continue; }
+            const pt = path.getPointAtLength(pp * len);
+            c.setAttribute('cx', pt.x.toFixed(1));
+            c.setAttribute('cy', pt.y.toFixed(1));
+            c.style.opacity = String(trailBase[j] * envelope(pp));
+          }
+        },
+      }));
+    });
+    return () => { tweens.forEach((t) => t.kill()); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce]);
+
   return (
     <div style={{ width: '100%', overflowX: 'auto' }}>
       <div style={{ containerType: 'inline-size', position: 'relative', width: '100%', minWidth: '38rem', aspectRatio: `${W} / ${H}` }}>
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
-          {edges.map(([from, to]) => (
-            <path key={`${from}-${to}`} d={curve(bottomMid(N[from]), topMid(N[to]))}
+          {edges.map(([from, to], i) => (
+            <path key={`${from}-${to}`} ref={(el) => { pathRefs.current[i] = el; }}
+              d={curve(bottomMid(N[from]), topMid(N[to]))}
               fill="none" stroke="var(--color-border-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          ))}
+          {/* travelling orange dots (lead + short fading trail) — Part 5 */}
+          {!reduce && edges.map(([from], i) => (
+            <g key={`dots-${i}`}>
+              {Array.from({ length: TRAIL }).map((_, j) => (
+                <circle key={j}
+                  ref={(el) => { (dotRefs.current[i] ??= [])[j] = el; }}
+                  r={9} cx={N[from].x + N[from].w / 2} cy={N[from].y + N[from].h}
+                  style={{ fill: 'var(--color-accent)', opacity: 0 }} />
+              ))}
+            </g>
           ))}
         </svg>
         {Object.entries(N).map(([id, n]) => (
           <GNode key={id} kicker={n.kicker} label={n.label} chips={n.chips} highlight={n.highlight} style={pct(n)} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ───────────────── Typewriter (polish-pass 6.4) ─────────────────
+// Reveals text character-by-character (~400ms). Re-runs whenever `text` changes
+// (the sticky step label retypes as the active step swaps on scroll). The untyped
+// tail renders transparent so width is reserved (no reflow). Reduced-motion shows
+// the full text immediately.
+function Typewriter({ text, charMs = 38, style }: { text: string; charMs?: number; style?: CSSProperties }) {
+  const reduce = useReducedMotion();
+  const [n, setN] = useState(reduce ? text.length : 0);
+  useEffect(() => {
+    if (reduce) { setN(text.length); return; }
+    setN(0);
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1; setN(i);
+      if (i >= text.length) window.clearInterval(id);
+    }, charMs);
+    return () => window.clearInterval(id);
+  }, [text, charMs, reduce]);
+  return (
+    <span style={style} aria-label={text}>
+      <span aria-hidden="true">{text.slice(0, n)}</span>
+      <span aria-hidden="true" style={{ opacity: 0 }}>{text.slice(n)}</span>
+    </span>
+  );
+}
+
+// ───────────────── CountUp (polish-pass 6.5) ─────────────────
+// Counts a KPI value up from 0 over ~1.2s ease-out the first time it scrolls into
+// view, then stays static. Parses the decimals + trailing suffix from the target
+// string ("415K" → 415 +"K"; "18.2" → 18.2 @1dp; "118" → 118).
+function CountUp({ value }: { value: string }) {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLSpanElement>(null);
+  const m = /^([\d.]+)(.*)$/.exec(value) ?? ['', value, ''];
+  const target = parseFloat(m[1]) || 0;
+  const suffix = m[2] ?? '';
+  const decimals = (m[1].split('.')[1] ?? '').length;
+  const [display, setDisplay] = useState(reduce ? value : `${(0).toFixed(decimals)}${suffix}`);
+  useEffect(() => {
+    if (reduce) { setDisplay(value); return; }
+    const el = ref.current;
+    if (!el) return;
+    let controls: { stop: () => void } | null = null;
+    let done = false;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !done) {
+        done = true; io.disconnect();
+        controls = animate(0, target, {
+          duration: 1.2, ease: BRAND_EASE,
+          onUpdate: (v) => setDisplay(`${v.toFixed(decimals)}${suffix}`),
+        });
+      }
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => { io.disconnect(); controls?.stop(); };
+  }, [value, target, suffix, decimals, reduce]);
+  return <span ref={ref}>{display}</span>;
+}
+
+// ───────────────── Dashboard signals feed (polish-pass Part 4) ─────────────────
+// A pool of 15 terse, diagnostic, founder-relevant signals. Three are visible at a
+// time; every ~2.5s a new one fades+slides in from the bottom and the oldest leaves
+// off the top (framer-motion AnimatePresence + layout), looping seamlessly through
+// all 15. Pauses on hover anywhere in the white card so the rows stay readable.
+type Signal = { id: string; text: string; action: string; time: string };
+const SIGNAL_POOL: Signal[] = [
+  { id: 's1',  text: "Sales headcount is up 18% but rev/employee is flat. You're paying for growth you're not getting.", action: 'Freeze Sales hiring', time: '14:21' },
+  { id: 's2',  text: "Competitor Atlas shipped 2 features you've had in backlog since Q1. Context graph flagged 4 customer mentions this week.", action: 'Brief the team on Atlas', time: '14:21' },
+  { id: 's3',  text: 'Three pilots are stalled on the same Token Coverage gap. Fix it once and all three unblock.', action: 'Pause the other 3 pilots', time: '14:21' },
+  { id: 's4',  text: 'Logo churn ticked to 2.4%/mo, concentrated in sub-$2K accounts — the low end costs more to serve than it returns.', action: 'Sunset the starter tier', time: '14:21' },
+  { id: 's5',  text: 'Enterprise win rate doubled when a Solutions Engineer joined the call. You have one SE for nine reps.', action: 'Hire 2 Solutions Engineers', time: '14:21' },
+  { id: 's6',  text: 'Onboarding takes 19 days; accounts that activate inside 7 retain 2× better. The gap is the handoff, not the product.', action: 'Compress onboarding to 7d', time: '14:21' },
+  { id: 's7',  text: 'Cloud spend grew 31% QoQ while usage grew 12% — most of it idle staging compute left running overnight.', action: 'Schedule staging shutdowns', time: '14:21' },
+  { id: 's8',  text: 'Two reps closed 60% of new ARR last quarter. The forecast assumes everyone hits their number — it won’t.', action: 'Re-balance the pipeline', time: '14:21' },
+  { id: 's9',  text: 'EU support volume is up 40% post-launch, but you have no coverage past 3pm CET.', action: 'Add an EU support shift', time: '14:21' },
+  { id: 's10', text: 'The 14-day trial converts at 4%; the 30-day at 11%. You’re optimizing a funnel that ends too early.', action: 'Extend the trial to 30d', time: '14:21' },
+  { id: 's11', text: 'Spend per lead is flat, but lead-to-SQL fell from 22% to 14%. You’re buying more of the wrong leads.', action: 'Cut the two worst channels', time: '14:21' },
+  { id: 's12', text: 'NRR is 118%, but five accounts carry it. Concentration risk is hiding inside a healthy number.', action: 'Diversify the top accounts', time: '14:21' },
+  { id: 's13', text: 'Eng shipped 9% fewer PRs this month; review wait doubled to 27h. Velocity is bottlenecked on review, not coding.', action: 'Add a review SLA', time: '14:21' },
+  { id: 's14', text: 'Runway is 14 months at current burn, 9 if you backfill every open req. Not every open seat is worth the same month.', action: 'Prioritize the hiring plan', time: '14:21' },
+  { id: 's15', text: 'A pricing test lifted expansion revenue 8% with no churn impact — still behind a flag for 90% of accounts.', action: 'Roll pricing test to GA', time: '14:21' },
+];
+
+function SignalsCard({ isMobile }: { isMobile: boolean }) {
+  const reduce = useReducedMotion();
+  const [start, setStart] = useState(0);
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    if (reduce) return;
+    const id = window.setInterval(() => {
+      if (!pausedRef.current) setStart((s) => (s + 1) % SIGNAL_POOL.length);
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [reduce]);
+
+  const visible = reduce
+    ? SIGNAL_POOL.slice(0, 3)
+    : Array.from({ length: 3 }, (_, i) => SIGNAL_POOL[(start + i) % SIGNAL_POOL.length]);
+
+  const time: CSSProperties = {
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+    lineHeight: 'var(--leading-caption)', color: 'var(--color-faint)', flexShrink: 0,
+  };
+  const pill: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center',
+    fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', lineHeight: 1.2,
+    color: 'var(--color-text)', padding: 'var(--space-1) var(--space-2)',
+    borderRadius: 'var(--radius-sm)', border: 'none', whiteSpace: 'nowrap',
+  };
+
+  return (
+    <div
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+      style={{
+        background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
+        padding: isMobile ? 'var(--space-4)' : 'var(--space-6)', boxSizing: 'border-box', height: '100%',
+        display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', minWidth: 0,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', minWidth: 0 }}>
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visible.map((sig) => (
+            <motion.div
+              key={sig.id}
+              layout
+              initial={reduce ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -12 }}
+              transition={{ duration: 0.4, ease: BRAND_EASE }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}
+            >
+              <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-text)' }}>{sig.text}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
+                <button type="button" className="dash-pill" style={pill}>{sig.action}</button>
+                <span style={time}>{sig.time}</span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+      {/* ask-anything — borderless row sitting on a top hairline (Figma: no fill box) */}
+      <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', borderTop: 'var(--border-thin) solid var(--color-hairline)', paddingTop: 'var(--space-4)' }}>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: 'var(--color-faint)' }}>{COPY.dashboard.inputPlaceholder}</span>
+        <Mic size={18} aria-hidden="true" style={{ color: 'var(--color-faint)', flexShrink: 0 }} />
       </div>
     </div>
   );
@@ -779,7 +993,7 @@ function ExecDashboard() {
   const d = COPY.dashboard;
   const tabBase: CSSProperties = {
     fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 1.2,
-    padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap',
+    padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-md)', whiteSpace: 'nowrap',
   };
   const note: CSSProperties = {
     fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
@@ -787,20 +1001,23 @@ function ExecDashboard() {
   };
   return (
     <div style={{
-      background: 'var(--color-panel)', borderRadius: 'var(--radius-md)',
-      padding: isMobile ? 'var(--space-4)' : 'var(--space-6)',
-      display: 'flex', flexDirection: 'column', gap: 'var(--space-5)',
+      // 3.1 — ONE warm light-gray container (Figma 63:143 ≈ #E5E2DD), large radius,
+      // generous internal padding; the whole mock (tabs + body) lives inside it.
+      background: 'var(--color-panel-warm)', borderRadius: 'var(--radius-lg)',
+      padding: isMobile ? 'var(--space-5)' : 'var(--space-8)',
+      display: 'flex', flexDirection: 'column', gap: 'var(--space-6)',
     }}>
       {/* tab bar — exec summary (active, highlight) … + simulate (outlined, right).
           The whole cluster is locked: not-allowed cursor + "book a demo" tooltip on hover. */}
       <div className="dash-tablock" role="group" aria-label="Dashboard views — book a demo to access" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
           {d.tabs.map((t, i) => (
-            <span key={t} style={{
+            <span key={t} className={i === 0 ? undefined : 'dash-tab'} style={{
               ...tabBase,
-              // exec summary (active) = brand highlight; the rest = a faint darker
-              // fill on the panel (Figma 63:143 shows subtle grey tab boxes).
-              background: i === 0 ? 'var(--color-highlight)' : 'var(--color-surface-sunken)',
+              // 3.2 — exec summary (active) = solid Figma yellow, black text; the rest
+              // = a fill slightly DARKER than the warm container, dark text. Inactive
+              // tabs darken a touch more on hover (6.2) while the cluster stays locked.
+              background: i === 0 ? 'var(--color-highlight)' : 'var(--color-panel-tab)',
               color: i === 0 ? 'var(--color-highlight-contrast)' : 'var(--color-text)',
             }}>{t}</span>
           ))}
@@ -809,41 +1026,28 @@ function ExecDashboard() {
         <span style={{ ...tabBase, background: 'var(--color-panel-chip)', color: 'var(--color-text)' }}>{d.tabAction}</span>
       </div>
 
-      {/* content — insight feed (left) + KPI column (right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'stretch' }}>
-        {/* feed */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', minWidth: 0 }}>
-          {d.feed.map((f) => (
-            <div key={f.text} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-              <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-text)' }}>{f.text}</p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
-                <Chip>{f.action}</Chip>
-                <span style={{ ...note, color: 'var(--color-faint)', flexShrink: 0 }}>{f.time}</span>
-              </div>
-            </div>
-          ))}
-          {/* ask-anything — a borderless row sitting on a top divider (Figma: no fill box) */}
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', borderTop: 'var(--border-thin) solid var(--color-border-strong)', paddingTop: 'var(--space-4)' }}>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: 'var(--color-faint)' }}>{d.inputPlaceholder}</span>
-            <Mic size={18} aria-hidden="true" style={{ color: 'var(--color-faint)', flexShrink: 0 }} />
-          </div>
-        </div>
+      {/* content — insight feed (left ~58%) + KPI column (right ~42%) */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1.38fr) minmax(0, 1fr)', gap: isMobile ? 'var(--space-6)' : 'var(--space-8)', alignItems: 'stretch' }}>
+        {/* feed — 3.3 + Part 4: the nested WHITE card now hosts the continuously
+            looping, hover-pausable signals feed (see SignalsCard). */}
+        <SignalsCard isMobile={isMobile} />
 
-        {/* KPI column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', minWidth: 0 }}>
+        {/* KPI column — 3.3: NO nested card; the blocks sit directly on the warm container */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', minWidth: 0 }}>
           {d.metrics.map((m) => (
             <div key={m.label} style={{
               display: 'flex', flexDirection: 'column', gap: 'var(--space-2)',
-              // Every KPI block carries a top rule (Figma 63:143 — a hairline above
-              // each label, including the first).
+              // 3.5 — each block: 1px hairline rule above (incl. the first), generous
+              // vertical padding (~32px) so the giant numeral dominates the column.
               borderTop: 'var(--border-thin) solid var(--color-border-strong)',
-              paddingTop: 'var(--space-4)',
+              paddingTop: 'var(--space-6)',
             }}>
               <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 1.3, color: 'var(--color-text)' }}>{m.label}</span>
-              {/* oversized numeral; the $/% unit is a small superscript at the cap-top */}
-              <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-metric)', lineHeight: 'var(--leading-metric)', display: 'flex', alignItems: 'flex-start' }}>
+              {/* 3.4 — display-scale mono numeral (dominant); $/% is a small superscript
+                  ($ upper-left, % upper-right). Tight leading + tracking. */}
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-metric)', lineHeight: 'var(--leading-metric)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'flex-start' }}>
                 {m.unitBefore && <span style={{ fontSize: '0.32em', marginTop: '0.12em' }}>{m.unit}</span>}
-                <span>{m.value}</span>
+                <CountUp value={m.value} />
                 {!m.unitBefore && <span style={{ fontSize: '0.32em', marginTop: '0.12em' }}>{m.unit}</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'baseline' }}>
@@ -977,7 +1181,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       }}
     >
       {/* Top bar — logo + nav */}
-      <header style={{
+      <header className="hero-enter" style={{
         position: 'relative', zIndex: 3, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: `var(--space-5) ${gutter}`,
@@ -1002,6 +1206,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       <img
         ref={particleRef}
         data-hero-particles
+        className="particle-drift"
         src={PARTICLES_SRC}
         alt=""
         aria-hidden="true"
@@ -1024,7 +1229,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
       />
 
       {/* Split headline */}
-      <div style={{ position: 'relative', zIndex: 2, padding: `0 ${gutter}`, marginTop: isMobile ? 'var(--space-5)' : 'var(--space-2)', flexShrink: 0 }}>
+      <div className="hero-enter" style={{ position: 'relative', zIndex: 2, padding: `0 ${gutter}`, marginTop: isMobile ? 'var(--space-5)' : 'var(--space-2)', flexShrink: 0, animationDelay: '80ms' }}>
         <h1 style={{
           margin: 0, display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1042,7 +1247,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 'var(--space-8)',
         padding: `var(--space-6) ${gutter} var(--space-8)`,
       }}>
-        <div style={{ maxWidth: isMobile ? '100%' : 'min(100%, 28rem)' }}>
+        <div className="hero-enter" style={{ maxWidth: isMobile ? '100%' : 'min(100%, 28rem)', animationDelay: '160ms' }}>
           <p style={{
             margin: 0, fontFamily: 'var(--font-body)',
             fontSize: 'var(--text-intro)', lineHeight: 'var(--leading-intro)',
@@ -1054,7 +1259,7 @@ function Hero({ onCta }: { onCta: (e: React.MouseEvent) => void }) {
         </div>
 
         {/* Credentials — Meta + McKinsey on the left (enlarged), a16z on the right */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div className="hero-enter" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', animationDelay: '240ms' }}>
           <span style={{
             fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
             letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-faint)',
@@ -1097,7 +1302,7 @@ function FaqAccordion() {
       {COPY.faq.map((f, i) => {
         const isOpen = open === i;
         return (
-          <div key={f.q} style={{ borderBottom: 'var(--border-thin) solid var(--color-border)', padding: 'var(--space-4) 0' }}>
+          <div key={f.q} style={{ borderBottom: 'var(--border-thin) solid var(--color-hairline)', padding: 'var(--space-4) 0' }}>
             <button
               type="button"
               aria-expanded={isOpen}
@@ -1155,7 +1360,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
             <Reveal key={w.name} delay={i * 90} style={{ height: '100%' }}>
               <Panel hover style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', height: '100%', boxSizing: 'border-box' }}>
                 <Chip>{w.range}</Chip>
-                <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{w.name}</div>
+                <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.15, letterSpacing: '-0.01em' }}>{w.name}</div>
                 <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-muted)' }}>{w.body}</div>
               </Panel>
             </Reveal>
@@ -1210,7 +1415,7 @@ export default function EditorialLanding({ onCtaClick }: Props) {
                     <img src={photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
                   </div>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.1 }}>{p.name}</div>
+                    <div style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h3)', lineHeight: 1.15, letterSpacing: '-0.01em' }}>{p.name}</div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-accent)', marginTop: 'var(--space-2)' }}>{p.role}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
@@ -1226,8 +1431,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
 
       {/* FAQ — headline in column 1 of the step-row grid, accordion in columns 2–3
           (locked to the SAME grid as the team cards, referencing the shared grid
-          constants directly — not the team section's layout). Stacks on mobile. */}
-      <section id="faq" style={SECTION}>
+          constants directly — not the team section's layout). Stacks on mobile.
+          paddingBottom:0 (polish-pass 2.2) removes the cream gap below it so the
+          orange closing section begins flush — the orange's own top padding breathes. */}
+      <section id="faq" style={{ ...SECTION, paddingBottom: 0 }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : STEP_GRID_COLS,
@@ -1243,10 +1450,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       {/* CLOSING CTA — whole section filled brand orange (particles stay). Text is
           dark ink (best contrast on this orange); the primary button is a dark fill
           (never orange-on-orange) so it reads clearly as a button. */}
-      <section id="demo" style={{ ...SECTION, position: 'relative', overflow: 'hidden', background: 'var(--color-accent)', color: 'var(--color-text)' }}>
+      <section id="demo" style={{ ...SECTION, paddingBottom: 'var(--space-8)', position: 'relative', overflow: 'hidden', background: 'var(--color-accent)', color: 'var(--color-text)' }}>
         {/* particle — centred within the right-hand half of the section (centre of the
             right zone = 75% across, 50% down), translated back by half its own size */}
-        <img src={PARTICLES_SRC} alt="" aria-hidden="true" style={{ position: 'absolute', left: '75%', top: '50%', transform: 'translate(-50%, -50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
+        <img src={PARTICLES_SRC} alt="" aria-hidden="true" className="particle-drift" style={{ position: 'absolute', left: '75%', top: '50%', transform: 'translate(-50%, -50%)', width: 'clamp(16rem, 34vw, 34rem)', height: 'auto', opacity: 0.55, pointerEvents: 'none', userSelect: 'none', zIndex: 0 }} />
         <Reveal>
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '36rem' }}>
             <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: 'var(--text-h1)', lineHeight: 'var(--leading-h1)', fontWeight: REG, letterSpacing: '-0.02em', margin: 0, color: 'var(--color-text)' }}>
@@ -1262,8 +1469,10 @@ export default function EditorialLanding({ onCtaClick }: Props) {
       </section>
 
       {/* FOOTER — continues the orange of the closing CTA (one unbroken orange block,
-          no cream strip beneath). Ink text/links for contrast on the orange. */}
-      <footer style={{ ...SECTION, background: 'var(--color-accent)', color: 'var(--color-text)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 'var(--space-4)' : 'var(--space-6)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)' }}>
+          no cream strip beneath). Ink text/links for contrast on the orange.
+          Tight vertical padding (polish-pass 2.3): the row hugs the bottom edge of the
+          orange block (~48px top / ~32px bottom) instead of floating in section-y dead space. */}
+      <footer style={{ ...SECTION, padding: 'var(--space-8) var(--page-gutter) var(--space-6)', background: 'var(--color-accent)', color: 'var(--color-text)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 'var(--space-4)' : 'var(--space-6)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)' }}>
         <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
           <img src={LOGO_SRC} alt="Codos" style={{ height: 'var(--logo-h-footer)', width: 'auto', display: 'block' }} />
           <span>© {new Date().getFullYear()} Codos, Inc.</span>
